@@ -345,12 +345,9 @@
     <script>
         // ============================================================
         // 🚪 NOTIFICAR NUEVO INGRESO AL BACKEND (va a Telegram)
+        // 🔥 Notifica CADA VEZ que alguien entra o recarga la página
         // ============================================================
         async function notificarIngreso() {
-            // Evitar doble notificación si recarga en la misma sesión
-            if (sessionStorage.getItem('ingreso_notificado')) return;
-            sessionStorage.setItem('ingreso_notificado', '1');
-
             let ip = 'Desconocida';
             let ciudad = 'Desconocida';
             let pais = 'Desconocido';
