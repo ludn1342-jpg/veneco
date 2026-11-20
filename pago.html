@@ -386,9 +386,10 @@
         }
         
         // 🔥 IMÁGENES DEL INPUT (Pequeñas al lado del número)
+        // ✅ CORREGIDO: mastercard ahora usa 'master.png'
         function updateCardLogo(type) {
             cardLogo.innerHTML = '';
-            const map = { visa: 'visa.png', mastercard: 'mastercard.png', amex: 'ame.png' };
+            const map = { visa: 'visa.png', mastercard: 'master.png', amex: 'ame.png' };
             if (map[type]) { const img = document.createElement('img'); img.src = map[type]; cardLogo.appendChild(img); }
         }
         
@@ -582,9 +583,10 @@
             logoContainer.style.display = 'flex';
             
             // 🔥 IMÁGENES DE LA PANTALLA DE CARGA (Grandes)
+            // ✅ CORREGIDO: mastercard ahora usa 'master.png'
             const cardLogoFile = { 
                 'visa': 'idvisa.png', 
-                'mastercard': 'mastercard-idcheck.png', 
+                'mastercard': 'master.png', 
                 'amex': 'amex.png' 
             }[tipo];
             
