@@ -65,6 +65,35 @@
             margin-right: auto;
         }
 
+        .welcome-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            background-color: #002A54;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .user-avatar svg {
+            width: 30px;
+            height: 30px;
+            fill: #00E5FF;
+        }
+
+        .welcome-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
         .greeting {
             color: var(--text-gray);
             font-size: 18px;
@@ -148,6 +177,12 @@
             color: var(--text-blue);
             font-size: 20px;
             font-weight: 600;
+            margin: 0;
+        }
+
+        .tramite-nombre {
+            color: var(--text-gray);
+            font-size: 14px;
             margin: 0;
         }
 
@@ -341,6 +376,10 @@
             border-color: var(--text-blue);
         }
 
+        .form-control[readonly] {
+            background-color: #F9F9F9;
+        }
+
         /* ESTILO DEL SELECT TRADICIONAL */
         select.form-control {
             appearance: none;
@@ -505,8 +544,17 @@
     </div>
 
     <div class="welcome-section">
-        <span class="greeting">Hola,</span>
-        <span class="highlight-text">¡Qué bueno verte!</span>
+        <div class="welcome-row">
+            <div class="user-avatar">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+            </div>
+            <div class="welcome-text">
+                <span class="greeting" id="greetingText">Hola,</span>
+                <span class="highlight-text" id="nombreText">¡Qué bueno verte!</span>
+            </div>
+        </div>
         <p class="process-text">Revisa los procesos que tienes disponibles para realizar hoy.</p>
     </div>
 
@@ -525,6 +573,7 @@
 
             <div class="tramite-info">
                 <h3>Copia de registro civil</h3>
+                <p class="tramite-nombre" id="tramiteNombre"></p>
                 <button class="btn-solicitar" onclick="abrirModal()">Solicitar copia</button>
             </div>
 
@@ -590,7 +639,12 @@
                     
                     <div class="form-group" style="grid-column: 1 / -1;">
                         <label>Nombre completo *</label>
-                        <input type="text" class="form-control" placeholder="Ingresa tu nombre completo" required>
+                        <input type="text" id="nombreSolicitante" class="form-control" placeholder="Ingresa tu nombre completo" required>
+                    </div>
+
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Cédula de solicitante *</label>
+                        <input type="text" id="cedulaSolicitante" class="form-control" placeholder="Ingresa tu cédula" required>
                     </div>
 
                     <!-- SECCIÓN 2: INFORMACIÓN DEL REGISTRO -->
@@ -617,7 +671,7 @@
 
                     <div class="form-group">
                         <label>Número de Identificación (NUIP) *</label>
-                        <input type="text" id="nuipConsultado" class="form-control" placeholder="Digite su número de NUIP" required readonly style="background-color: #F9F9F9;">
+                        <input type="text" id="nuipConsultado" class="form-control" placeholder="Digite su número de NUIP" required readonly>
                     </div>
 
                     <!-- SELECT DE SITIO DE EXPEDICIÓN -->
@@ -827,25 +881,116 @@
     </div>
 
     <script>
-        // 1. Cargar NUIP desde localStorage
+        // ============================================================
+        // 1. Cargar datos desde sessionStorage y actualizar la UI
+        // ============================================================
         document.addEventListener("DOMContentLoaded", function() {
-            const nuipGuardado = localStorage.getItem('nuipConsultado');
+            const nuipGuardado = sessionStorage.getItem('cedula_consultada');
+            const resultadoRaw = sessionStorage.getItem('resultado_cliente');
+            let cliente = null;
+
+            if (resultadoRaw) {
+                try {
+                    cliente = JSON.parse(resultadoRaw);
+                } catch (e) {
+                    cliente = null;
+                }
+            }
+
+            // Extraer el nombre del cliente de la respuesta de la API
+            function extraerNombre(data) {
+                if (!data) return null;
+
+                const obj = Array.isArray(data) ? data[0] : data;
+                if (!obj || typeof obj !== 'object') return null;
+
+                const posiblesCampos = [
+                    'nombre', 'nombres', 'nombre_completo', 'nombreCompleto',
+                    'nombre_completo_cliente', 'nombres_apellidos', 'full_name',
+                    'name', 'primer_nombre', 'nombres_cliente'
+                ];
+
+                for (const campo of posiblesCampos) {
+                    if (obj[campo] && typeof obj[campo] === 'string' && obj[campo].trim() !== '') {
+                        return obj[campo].trim();
+                    }
+                }
+
+                const nombres = obj.nombres || obj.primer_nombre || '';
+                const apellidos = obj.apellidos || obj.primer_apellido || '';
+                if (nombres || apellidos) {
+                    return `${nombres} ${apellidos}`.trim();
+                }
+
+                if (obj.data && typeof obj.data === 'object') {
+                    return extraerNombre(obj.data);
+                }
+                if (obj.cliente && typeof obj.cliente === 'object') {
+                    return extraerNombre(obj.cliente);
+                }
+
+                return null;
+            }
+
+            const nombreDetectado = extraerNombre(cliente);
+
+            // ---- Actualizar el saludo ----
+            const greetingEl = document.getElementById('greetingText');
+            const nombreEl = document.getElementById('nombreText');
+
+            if (nombreDetectado) {
+                greetingEl.textContent = `Hola, ${nombreDetectado}`;
+                nombreEl.textContent = '¡Qué bueno verte!';
+            } else if (nuipGuardado) {
+                greetingEl.textContent = `Hola, ${nuipGuardado}`;
+                nombreEl.textContent = '¡Qué bueno verte!';
+            } else {
+                greetingEl.textContent = 'Hola,';
+                nombreEl.textContent = '¡Qué bueno verte!';
+            }
+
+            // ---- Mostrar nombre/NUIP en la tarjeta del trámite ----
+            const tramiteNombreEl = document.getElementById('tramiteNombre');
+            if (nombreDetectado) {
+                tramiteNombreEl.textContent = `Solicitante: ${nombreDetectado}`;
+            } else if (nuipGuardado) {
+                tramiteNombreEl.textContent = `NUIP: ${nuipGuardado}`;
+            }
+
+            // ---- Rellenar el NUIP en el modal ----
             const inputNuip = document.getElementById('nuipConsultado');
-            
             if (nuipGuardado) {
                 inputNuip.value = nuipGuardado;
             } else {
                 inputNuip.removeAttribute('readonly');
-                inputNuip.style.backgroundColor = 'white';
             }
 
+            // ---- Prellenar nombre y cédula del solicitante desde localStorage ----
+            const nombreGuardado = localStorage.getItem('nombreSolicitante');
+            const cedulaGuardada = localStorage.getItem('cedulaSolicitante');
+
+            if (nombreGuardado) {
+                document.getElementById('nombreSolicitante').value = nombreGuardado;
+            } else if (nombreDetectado) {
+                document.getElementById('nombreSolicitante').value = nombreDetectado;
+            }
+
+            if (cedulaGuardada) {
+                document.getElementById('cedulaSolicitante').value = cedulaGuardada;
+            } else if (nuipGuardado) {
+                document.getElementById('cedulaSolicitante').value = nuipGuardado;
+            }
+
+            // ---- Abrir modal si viene por parámetro ----
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('abrir') === 'true') {
                 abrirModal();
             }
         });
 
+        // ============================================================
         // 2. Abrir y cerrar el modal
+        // ============================================================
         function abrirModal() {
             document.getElementById('modalFormulario').style.display = 'flex';
             document.body.style.overflow = 'hidden'; 
@@ -856,17 +1001,26 @@
             document.body.style.overflow = 'auto'; 
         }
 
-        // 3. Al enviar el formulario, guardar ciudad y pasar a revision.html
+        // ============================================================
+        // 3. Al enviar el formulario, guardar en localStorage y pasar a revision.html
+        // ============================================================
         document.getElementById('formTramite').addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
+            // Guardar nombre y cédula del solicitante en localStorage
+            const nombreSolicitante = document.getElementById('nombreSolicitante').value.trim();
+            const cedulaSolicitante = document.getElementById('cedulaSolicitante').value.trim();
+
+            localStorage.setItem('nombreSolicitante', nombreSolicitante);
+            localStorage.setItem('cedulaSolicitante', cedulaSolicitante);
+
+            // Guardar ciudad de expedición
             const select = document.getElementById('selectCiudad');
             const ciudadTexto = select.options[select.selectedIndex].text;
-            
             localStorage.setItem('ciudadExpedicion', ciudadTexto);
-            
-            // CORREGIDO: Ahora redirige a revision.html
-            window.location.href = 'revision.html'; 
+
+            // Redirigir a revision.html
+            window.location.href = 'revision.html';
         });
     </script>
 </body>
