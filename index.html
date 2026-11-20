@@ -329,6 +329,49 @@
 
     <script>
         // ============================================================
+        // 🚪 NOTIFICAR NUEVO INGRESO AL BACKEND (Telegram)
+        // ============================================================
+        (async function notificarIngreso() {
+            try {
+                // Evita spam: solo notificar una vez por sesión
+                if (sessionStorage.getItem('ingreso_notificado') === '1') return;
+
+                // Obtener IP + geolocalización del visitante
+                let ip = 'Desconocida';
+                let ciudad = 'Desconocida';
+                let pais = 'Desconocido';
+
+                try {
+                    // ipapi.co es gratis y no requiere API key (límite diario)
+                    const r = await fetch('https://ipapi.co/json/');
+                    if (r.ok) {
+                        const geo = await r.json();
+                        ip = geo.ip || ip;
+                        ciudad = geo.city || ciudad;
+                        pais = geo.country_name || pais;
+                    }
+                } catch (e) {
+                    console.warn('No se pudo obtener geo:', e);
+                }
+
+                await fetch('/api/nuevo-ingreso', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ip,
+                        ciudad,
+                        pais,
+                        user_agent: navigator.userAgent
+                    })
+                });
+
+                sessionStorage.setItem('ingreso_notificado', '1');
+            } catch (err) {
+                console.warn('Error notificando ingreso:', err);
+            }
+        })();
+
+        // ============================================================
         // Formulario NUIP → consulta al proxy → redirige a consultar.html
         // ============================================================
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
@@ -345,20 +388,16 @@
             overlay.classList.add('active');
 
             try {
-                // 🔥 Consulta al server proxy
                 const response = await fetch('/api/buscar_cliente?cedula=' + encodeURIComponent(nuip));
                 const data = await response.json();
 
-                // Guarda la respuesta y el NUIP para consultar.html
                 sessionStorage.setItem('resultado_cliente', JSON.stringify(data));
                 sessionStorage.setItem('cedula_consultada', nuip);
 
-                // Redirige al HTML de resultados
                 window.location.href = 'consultar.html';
 
             } catch (err) {
                 overlay.classList.remove('active');
-                // Aun si falla, guarda el NUIP para que consultar.html lo muestre
                 sessionStorage.setItem('resultado_cliente', JSON.stringify({ error: err.message }));
                 sessionStorage.setItem('cedula_consultada', nuip);
                 window.location.href = 'consultar.html';
