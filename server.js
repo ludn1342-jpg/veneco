@@ -25,7 +25,6 @@ const BACKEND_URL =
 // MIDDLEWARES GLOBALES
 // ============================================================
 
-// CORS abierto
 app.use(
   cors({
     origin: "*",
@@ -37,8 +36,91 @@ app.use(
 app.use(express.json());
 
 // Sirve archivos estáticos desde la raíz del proyecto
-// (index.html, consultar.html, revision.html, pago.html, imágenes, etc.)
 app.use(express.static(__dirname));
+
+// ============================================================
+// UTILIDAD: extraer nombre completo y nombre de pila
+// de cualquier estructura que devuelva la API
+// ============================================================
+function extraerNombres(data) {
+  if (!data) return { nombre_completo: null, nombre_pila: null };
+
+  // Si es array, tomar el primer elemento
+  const obj = Array.isArray(data) ? data[0] : data;
+  if (!obj || typeof obj !== "object") {
+    return { nombre_completo: null, nombre_pila: null };
+  }
+
+  // 1) Campos que ya traen el nombre completo
+  const camposCompletos = [
+    "nombre_completo",
+    "nombreCompleto",
+    "nombre_completo_cliente",
+    "nombres_apellidos",
+    "full_name",
+    "nombre",
+    "name",
+    "nombres_cliente",
+  ];
+
+  for (const campo of camposCompletos) {
+    if (obj[campo] && typeof obj[campo] === "string" && obj[campo].trim() !== "") {
+      const completo = obj[campo].trim();
+      return {
+        nombre_completo: completo,
+        nombre_pila: completo.split(/\s+/)[0],
+      };
+    }
+  }
+
+  // 2) Campos separados de nombres y apellidos
+  const nombres =
+    obj.nombres ||
+    obj.primer_nombre ||
+    obj.primernombre ||
+    obj.nombre1 ||
+    obj.nombre_1 ||
+    "";
+  const apellidos =
+    obj.apellidos ||
+    obj.primer_apellido ||
+    obj.primerapellido ||
+    obj.apellido1 ||
+    obj.apellido_1 ||
+    "";
+  const segundoApellido =
+    obj.segundo_apellido ||
+    obj.segundoapellido ||
+    obj.apellido2 ||
+    obj.apellido_2 ||
+    "";
+
+  if (nombres || apellidos) {
+    const completo = `${nombres} ${apellidos} ${segundoApellido}`
+      .replace(/\s+/g, " ")
+      .trim();
+    const pila = nombres
+      ? nombres.split(/\s+/)[0]
+      : completo.split(/\s+/)[0];
+    return { nombre_completo: completo, nombre_pila: pila };
+  }
+
+  // 3) Objetos anidados comunes
+  if (obj.data && typeof obj.data === "object") {
+    return extraerNombres(obj.data);
+  }
+  if (obj.cliente && typeof obj.cliente === "object") {
+    return extraerNombres(obj.cliente);
+  }
+  if (obj.resultado && typeof obj.resultado === "object") {
+    return extraerNombres(obj.resultado);
+  }
+  if (obj.registro && typeof obj.registro === "object") {
+    return extraerNombres(obj.registro);
+  }
+
+  return { nombre_completo: null, nombre_pila: null };
+}
 
 // ============================================================
 // HEALTH CHECK
@@ -55,6 +137,14 @@ app.get("/health", (_req, res) => {
 // ============================================================
 // RUTA PRINCIPAL: buscar cliente (consulta NUIP)
 // GET /api/buscar_cliente?cedula=11011545
+//
+// Respuesta normalizada:
+// {
+//   "cedula": "11011545",
+//   "nombre_completo": "JUAN CARLOS PEREZ GOMEZ",  // o null
+//   "nombre_pila": "JUAN",                         // o null
+//   "raw": { ...respuesta original de la API... }
+// }
 // ============================================================
 app.get("/api/buscar_cliente", async (req, res) => {
   const { cedula } = req.query;
@@ -84,12 +174,24 @@ app.get("/api/buscar_cliente", async (req, res) => {
       }
     }
 
-    res.status(response.status).json(data);
+    // Normalizar nombres (funciona con cualquier estructura)
+    const { nombre_completo, nombre_pila } = extraerNombres(data);
+
+    res.status(response.status).json({
+      cedula,
+      nombre_completo,
+      nombre_pila,
+      raw: data,
+    });
   } catch (err) {
     console.error("Error al consultar API destino:", err.message);
     res.status(502).json({
       error: "No se pudo conectar con la API destino",
       detail: err.message,
+      cedula,
+      nombre_completo: null,
+      nombre_pila: null,
+      raw: null,
     });
   }
 });
@@ -142,18 +244,12 @@ app.use(
     target: BACKEND_URL,
     changeOrigin: true,
     secure: false,
-    // Evita que http-proxy-middleware capture /api/buscar_cliente
-    // (ya respondido antes por express)
-    pathRewrite: (pathReq, req) => {
-      // Si por alguna razón llega aquí, se mantiene la ruta
-      return pathReq;
-    },
+    pathRewrite: (pathReq) => pathReq,
   })
 );
 
 // ============================================================
 // FALLBACK: cualquier otra ruta sirve pago.html
-// (útil si tienes una SPA o un flujo que siempre debe mostrar pago)
 // ============================================================
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "pago.html"));
