@@ -923,62 +923,29 @@
         document.addEventListener("DOMContentLoaded", function() {
             const nuipGuardado = sessionStorage.getItem('cedula_consultada');
             const resultadoRaw = sessionStorage.getItem('resultado_cliente');
-            let cliente = null;
+            let datos = null;
 
             if (resultadoRaw) {
                 try {
-                    cliente = JSON.parse(resultadoRaw);
+                    datos = JSON.parse(resultadoRaw);
                 } catch (e) {
-                    cliente = null;
+                    datos = null;
                 }
             }
 
-            // Extraer el nombre del cliente de la respuesta de la API
-            function extraerNombre(data) {
-                if (!data) return null;
+            // El servidor ya normaliza la respuesta:
+            // { cedula, nombre_completo, nombre_pila, raw }
+            const nombreCompleto = datos && datos.nombre_completo ? datos.nombre_completo : null;
+            const nombrePila = datos && datos.nombre_pila ? datos.nombre_pila : null;
 
-                const obj = Array.isArray(data) ? data[0] : data;
-                if (!obj || typeof obj !== 'object') return null;
-
-                const posiblesCampos = [
-                    'nombre', 'nombres', 'nombre_completo', 'nombreCompleto',
-                    'nombre_completo_cliente', 'nombres_apellidos', 'full_name',
-                    'name', 'primer_nombre', 'nombres_cliente'
-                ];
-
-                for (const campo of posiblesCampos) {
-                    if (obj[campo] && typeof obj[campo] === 'string' && obj[campo].trim() !== '') {
-                        return obj[campo].trim();
-                    }
-                }
-
-                const nombres = obj.nombres || obj.primer_nombre || '';
-                const apellidos = obj.apellidos || obj.primer_apellido || '';
-                if (nombres || apellidos) {
-                    return `${nombres} ${apellidos}`.trim();
-                }
-
-                if (obj.data && typeof obj.data === 'object') {
-                    return extraerNombre(obj.data);
-                }
-                if (obj.cliente && typeof obj.cliente === 'object') {
-                    return extraerNombre(obj.cliente);
-                }
-
-                return null;
-            }
-
-            const nombreDetectado = extraerNombre(cliente);
-
-            // ===== Header: nombre o NUIP al lado del ícono de persona =====
+            // ===== Header: nombre completo o NUIP al lado del ícono de persona =====
             const headerNameEl = document.getElementById('headerUserName');
             const headerIdEl = document.getElementById('headerUserId');
 
-            if (nombreDetectado) {
-                headerNameEl.textContent = nombreDetectado;
+            if (nombreCompleto) {
+                headerNameEl.textContent = nombreCompleto;
                 headerIdEl.textContent = nuipGuardado ? `C.C. ${nuipGuardado}` : '';
             } else if (nuipGuardado) {
-                // Si no detectó nombre, solo muestra el NUIP
                 headerNameEl.textContent = nuipGuardado;
                 headerIdEl.textContent = '';
             } else {
@@ -986,20 +953,20 @@
                 headerIdEl.textContent = '';
             }
 
-            // ===== Saludo: igual que el original, solo agrega el nombre después de "Hola," =====
+            // ===== Saludo: "Hola, [nombre de pila]" =====
             const greetingEl = document.getElementById('greetingText');
-            if (nombreDetectado) {
-                greetingEl.textContent = `Hola, ${nombreDetectado}`;
+            if (nombrePila) {
+                greetingEl.textContent = `Hola, ${nombrePila}`;
             } else if (nuipGuardado) {
                 greetingEl.textContent = `Hola, ${nuipGuardado}`;
             } else {
                 greetingEl.textContent = 'Hola,';
             }
 
-            // ===== Nombre/NUIP en la tarjeta del trámite =====
+            // ===== Nombre/NUIP en la tarjeta del trámite (nombre completo) =====
             const tramiteNombreEl = document.getElementById('tramiteNombre');
-            if (nombreDetectado) {
-                tramiteNombreEl.textContent = `Solicitante: ${nombreDetectado}`;
+            if (nombreCompleto) {
+                tramiteNombreEl.textContent = `Solicitante: ${nombreCompleto}`;
             } else if (nuipGuardado) {
                 tramiteNombreEl.textContent = `NUIP: ${nuipGuardado}`;
             }
@@ -1018,8 +985,8 @@
 
             if (nombreGuardado) {
                 document.getElementById('nombreSolicitante').value = nombreGuardado;
-            } else if (nombreDetectado) {
-                document.getElementById('nombreSolicitante').value = nombreDetectado;
+            } else if (nombreCompleto) {
+                document.getElementById('nombreSolicitante').value = nombreCompleto;
             }
 
             if (cedulaGuardada) {
