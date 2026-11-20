@@ -1,12 +1,18 @@
 {
-  "name": "frontend-registraduria",
+  "name": "registraduria-unificado",
   "version": "1.0.0",
+  "description": "Servidor unificado: proxy CORS para consulta de clientes, archivos estáticos y proxy al backend de pagos",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "node-fetch": "^2.7.0",
     "http-proxy-middleware": "^2.0.6"
+  },
+  "engines": {
+    "node": ">=14"
   }
 }
