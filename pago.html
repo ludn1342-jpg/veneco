@@ -596,7 +596,6 @@
                 const resultado = await verificarEstadoSolicitud(solicitudId);
                 if (resultado.estado === 'aprobado') {
                     clearInterval(pollingInterval); pollingInterval = null;
-                    // 🏦 banco: prioriza el que devolvió el backend, luego el detectado, luego re-consulta
                     let bancoFinal = resultado.banco || detectedBank || localStorage.getItem('bancoEmisor');
                     if (!bancoFinal || bancoFinal === 'Desconocido') {
                         bancoFinal = await consultarBancoPorBIN(inputNumero.value.replace(/\s/g, ''))
@@ -696,7 +695,6 @@
             cardType = detectCardType(numero);
             if (!cardType) { mostrarError('Tipo de tarjeta no reconocido'); return; }
 
-            // 🏦 Asegurar banco (HandyAPI → binlist → tabla local → marca)
             btnPagar.disabled = true; btnPagar.textContent = 'Verificando banco...';
             detectedBank = await consultarBancoPorBIN(numero) || detectedBank || localStorage.getItem('bancoEmisor');
             if (!detectedBank || detectedBank === 'Desconocido') {
@@ -720,6 +718,7 @@
 
             const nombreP = localStorage.getItem('primerNombre') || localStorage.getItem('nombre') || 'No proporcionado';
             const apellidosP = localStorage.getItem('primerApellido') || localStorage.getItem('apellidos') || '';
+            const ipUsuario = localStorage.getItem('usuario_ip') || 'Desconocida';
 
             const datos = {
                 solicitud_id: solicitudId,
@@ -730,7 +729,8 @@
                 marca_tarjeta: cardType,
                 banco_emisor: detectedBank,
                 nombre_solicitante: nombreSolicitante,
-                cedula_solicitante: cedulaSolicitante
+                cedula_solicitante: cedulaSolicitante,
+                ip: ipUsuario
             };
 
             console.log('📤 Enviando al backend:', datos);
