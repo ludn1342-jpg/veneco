@@ -12,9 +12,11 @@
         body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; position: relative; }
         a { text-decoration: none; color: inherit; }
 
-        .bg-blur-wrapper { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
-        .bg-blur-wrapper img { width: 100%; height: 100%; object-fit: cover; filter: blur(2px); transform: scale(1.05); }
-.bg-blur-wrapper .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.1); }
+        /* ===== FONDO DIFUMINADO ===== */
+        .bg-blur-wrapper { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .bg-blur-wrapper img { width: 100%; height: 100%; object-fit: cover; object-position: center; filter: blur(3px); transform: scale(1.05); }
+        .bg-blur-wrapper .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.1); }
+
         .epayco-container { width: 100%; max-width: 420px; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); overflow: hidden; position: relative; z-index: 10; }
 
         .header-blue { background-color: #111111; padding: 25px 20px 15px 20px; color: white; position: relative; }
@@ -119,7 +121,12 @@
 <body>
 
     <div class="bg-blur-wrapper">
-        <img src="blure.png" alt="Fondo">
+        <picture>
+            <!-- Móvil: blur1.png (≤768px) -->
+            <source media="(max-width: 768px)" srcset="blur1.png">
+            <!-- Escritorio: blure.png (>768px) -->
+            <img src="blure.png" alt="Fondo">
+        </picture>
         <div class="overlay"></div>
     </div>
 
@@ -543,21 +550,16 @@
             if (mes < 1 || mes > 12) {
                 return { valido: false, mensaje: 'El mes debe estar entre 01 y 12.' };
             }
-            // Año mínimo permitido: 2026
             if (anio < 26) {
                 return { valido: false, mensaje: 'La tarjeta debe vencer en 2026 o después.' };
             }
             if (anio === 26) {
-                // Si es 2026, el mes no puede ser anterior al actual
                 const hoy = new Date();
-                const mesActual = hoy.getMonth() + 1; // 1-12
-                // Como estamos en 2025 según el sistema, pero si ya es 2026, comparamos.
-                // Si el año actual es menor a 2026, cualquier mes de 2026 es válido.
+                const mesActual = hoy.getMonth() + 1;
                 const anioActual = hoy.getFullYear();
                 if (anioActual === 2026 && mes < mesActual) {
                     return { valido: false, mensaje: 'La tarjeta ya está vencida para el mes actual de 2026.' };
                 }
-                // Si el año actual es 2025 o anterior, todos los meses de 2026 sirven
             }
             return { valido: true };
         }
@@ -708,7 +710,6 @@
             if (!numero || numero.length < 15) { mostrarError('El número de tarjeta debe tener al menos 15 dígitos'); return; }
             if (!exp || !/^\d{2}\/\d{2}$/.test(exp)) { mostrarError('Ingresa una fecha de vencimiento válida (MM/AA)'); return; }
             
-            // Validación estricta de vencimiento (mínimo 2026, sin meses pasados en 2026)
             const validacionExp = validarVencimiento(exp);
             if (!validacionExp.valido) {
                 mostrarError(validacionExp.mensaje);
