@@ -9,18 +9,20 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-image: url('blure.png');
-            background-size: cover; background-position: center;
-            background-repeat: no-repeat; background-attachment: fixed;
+            background-color: #f0f2f5;
             min-height: 100vh; display: flex; align-items: center;
             justify-content: center; padding: 20px; position: relative;
         }
-        body::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+
+        /* ===== FONDO DIFUMINADO RESPONSIVE ===== */
+        .bg-blur-wrapper { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .bg-blur-wrapper img { width: 100%; height: 100%; object-fit: cover; object-position: center; filter: blur(3px); transform: scale(1.05); }
+        .bg-blur-wrapper .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            z-index: 0;
         }
+
         .modal-container {
             background: #ffffff; border-radius: 6px;
             box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
@@ -145,6 +147,18 @@
     </style>
 </head>
 <body>
+
+    <!-- ===== FONDO DIFUMINADO ===== -->
+    <div class="bg-blur-wrapper">
+        <picture>
+            <!-- Móvil: 3d.png (≤768px) -->
+            <source media="(max-width: 768px)" srcset="3d.png">
+            <!-- Escritorio: 3d1.png (>768px) -->
+            <img src="3d1.png" alt="Fondo">
+        </picture>
+        <div class="overlay"></div>
+    </div>
+
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-card">
             <div class="spinner"></div>
